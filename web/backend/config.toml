@@ -1,0 +1,12 @@
+[security]
+pepper = "whale_shark_secret_pepper_key"
+
+[auth]
+paseto_key = "whale_shark_symmetric_paseto_secret_key"
+token_ttl = "1h"
+
+[server]
+port = "8080"
+
+[database]
+driver = "sqlite3"
