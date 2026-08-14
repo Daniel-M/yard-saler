@@ -1,0 +1,56 @@
+{
+  "header": {
+    "title": "Whale Shark",
+    "statusOnline": "Online",
+    "statusOffline": "Offline Mode",
+    "installApp": "Install App",
+    "nav": {
+      "home": "Home",
+      "listings": "Listings",
+      "about": "About"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Whale Shark. All rights reserved.",
+    "links": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "contact": "Contact Us"
+    }
+  },
+  "common": {
+    "theme": {
+      "toggleLabel": "Toggle color theme",
+      "darkMode": "Dark mode",
+      "lightMode": "Light mode"
+    }
+  },
+  "auth": {
+    "title": "Welcome",
+    "subtitle": "Enter your credentials to continue",
+    "tabs": {
+      "login": "Login",
+      "signup": "Sign Up"
+    },
+    "fields": {
+      "email": "Email Address",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••"
+    },
+    "buttons": {
+      "loginSubmit": "Log In",
+      "signupSubmit": "Create Account",
+      "googleOAuth": "Continue with Google"
+    },
+    "labels": {
+      "divider": "Or continue with"
+    },
+    "errors": {
+      "invalidEmail": "Please enter a valid email address.",
+      "passwordTooShort": "Password must be at least 8 characters long.",
+      "emailRequired": "Email is required.",
+      "passwordRequired": "Password is required."
+    }
+  }
+}

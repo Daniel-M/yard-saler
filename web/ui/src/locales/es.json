@@ -1,0 +1,56 @@
+{
+  "header": {
+    "title": "Whale Shark",
+    "statusOnline": "En línea",
+    "statusOffline": "Modo sin conexión",
+    "installApp": "Instalar aplicación",
+    "nav": {
+      "home": "Inicio",
+      "listings": "Anuncios",
+      "about": "Acerca de"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Whale Shark. Todos los derechos reservados.",
+    "links": {
+      "terms": "Términos de servicio",
+      "privacy": "Política de privacidad",
+      "contact": "Contacto"
+    }
+  },
+  "common": {
+    "theme": {
+      "toggleLabel": "Cambiar tema de color",
+      "darkMode": "Modo oscuro",
+      "lightMode": "Modo claro"
+    }
+  },
+  "auth": {
+    "title": "Bienvenido",
+    "subtitle": "Ingresa tus credenciales para continuar",
+    "tabs": {
+      "login": "Iniciar Sesión",
+      "signup": "Registrarse"
+    },
+    "fields": {
+      "email": "Correo electrónico",
+      "emailPlaceholder": "correo@ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "••••••••"
+    },
+    "buttons": {
+      "loginSubmit": "Ingresar",
+      "signupSubmit": "Crear Cuenta",
+      "googleOAuth": "Continuar con Google"
+    },
+    "labels": {
+      "divider": "O continuar con"
+    },
+    "errors": {
+      "invalidEmail": "Por favor, ingresa un correo electrónico válido.",
+      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+      "emailRequired": "El correo electrónico es requerido.",
+      "passwordRequired": "La contraseña es requerida."
+    }
+  }
+}
