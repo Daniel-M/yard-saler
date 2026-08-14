@@ -41,7 +41,8 @@
     "buttons": {
       "loginSubmit": "Ingresar",
       "signupSubmit": "Crear Cuenta",
-      "googleOAuth": "Continuar con Google"
+      "googleOAuth": "Continuar con Google",
+      "forgotPassword": "¿Olvidaste tu contraseña?"
     },
     "labels": {
       "divider": "O continuar con"
@@ -51,6 +52,26 @@
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
       "emailRequired": "El correo electrónico es requerido.",
       "passwordRequired": "La contraseña es requerida."
+    }
+  },
+  "recovery": {
+    "title": "Recuperar contraseña",
+    "subtitle": "Ingresa tu correo electrónico para recibir un enlace de restablecimiento",
+    "fields": {
+      "email": "Correo electrónico",
+      "emailPlaceholder": "correo@ejemplo.com"
+    },
+    "buttons": {
+      "submit": "Enviar enlace",
+      "backToLogin": "Volver a iniciar sesión"
+    },
+    "success": {
+      "title": "Enlace enviado",
+      "message": "Si tu correo está registrado en nuestro sistema, recibirás un enlace para restablecer tu contraseña en unos momentos."
+    },
+    "errors": {
+      "emailRequired": "El correo electrónico es requerido.",
+      "invalidEmail": "Por favor, ingresa un correo electrónico válido."
     }
   }
 }

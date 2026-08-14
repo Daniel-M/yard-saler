@@ -41,7 +41,8 @@
     "buttons": {
       "loginSubmit": "Log In",
       "signupSubmit": "Create Account",
-      "googleOAuth": "Continue with Google"
+      "googleOAuth": "Continue with Google",
+      "forgotPassword": "Forgot password?"
     },
     "labels": {
       "divider": "Or continue with"
@@ -51,6 +52,26 @@
       "passwordTooShort": "Password must be at least 8 characters long.",
       "emailRequired": "Email is required.",
       "passwordRequired": "Password is required."
+    }
+  },
+  "recovery": {
+    "title": "Recover password",
+    "subtitle": "Enter your email address to receive a reset link",
+    "fields": {
+      "email": "Email Address",
+      "emailPlaceholder": "you@example.com"
+    },
+    "buttons": {
+      "submit": "Send link",
+      "backToLogin": "Back to login"
+    },
+    "success": {
+      "title": "Link sent",
+      "message": "If your email is registered in our system, you will receive a link to reset your password in a few moments."
+    },
+    "errors": {
+      "emailRequired": "Email is required.",
+      "invalidEmail": "Please enter a valid email address."
     }
   }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LoginView from '../LoginView';
 
@@ -19,6 +19,7 @@ vi.mock('react-i18next', () => ({
         'auth.buttons.loginSubmit': 'Ingresar',
         'auth.buttons.signupSubmit': 'Crear Cuenta',
         'auth.buttons.googleOAuth': 'Continuar con Google',
+        'auth.buttons.forgotPassword': '¿Olvidaste tu contraseña?',
         'auth.labels.divider': 'O continuar con',
         'auth.errors.invalidEmail': 'Por favor, ingresa un correo electrónico válido.',
         'auth.errors.passwordTooShort': 'La contraseña debe tener al menos 8 caracteres.',
@@ -143,7 +144,9 @@ describe('LoginView Component', () => {
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-    vi.runAllTimers();
+    act(() => {
+      vi.runAllTimers();
+    });
 
     expect(handleLoginSuccess).toHaveBeenCalledWith({ email: 'test@example.com', isSignUp: false });
     vi.useRealTimers();
@@ -157,5 +160,16 @@ describe('LoginView Component', () => {
     await user.click(googleBtn);
 
     expect(window.location.href).toBe('/api/v1/auth/google/login');
+  });
+
+  it('triggers onForgotPasswordClick when forgot password link is clicked', async () => {
+    const user = userEvent.setup();
+    const handleForgotPasswordClick = vi.fn();
+    render(<LoginView onForgotPasswordClick={handleForgotPasswordClick} />);
+
+    const forgotBtn = screen.getByRole('button', { name: /¿olvidaste tu contraseña\?/i });
+    await user.click(forgotBtn);
+
+    expect(handleForgotPasswordClick).toHaveBeenCalledTimes(1);
   });
 });

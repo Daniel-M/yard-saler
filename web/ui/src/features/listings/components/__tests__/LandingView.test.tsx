@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { LandingPage } from '../LandingPage';
+import LandingView from '../LandingView';
 
 // Mock translation hook according to Workflow B guidelines
 vi.mock('react-i18next', () => ({
@@ -24,9 +24,9 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-describe('LandingPage Component', () => {
+describe('LandingView Component', () => {
   it('renders landing page title and search options', () => {
-    render(<LandingPage />);
+    render(<LandingView />);
     
     // Check main title placeholder key
     expect(screen.getByText('landing.title')).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('LandingPage Component', () => {
   });
 
   it('filters listings by location search query', () => {
-    render(<LandingPage />);
+    render(<LandingView />);
     
     const searchInput = screen.getByPlaceholderText('landing.search.placeholder');
     
@@ -53,7 +53,7 @@ describe('LandingPage Component', () => {
   });
 
   it('filters listings by host filter query', () => {
-    render(<LandingPage />);
+    render(<LandingView />);
     
     const hostInput = screen.getByPlaceholderText('landing.search.filterHost');
     
@@ -65,7 +65,7 @@ describe('LandingPage Component', () => {
   });
 
   it('navigates the image carousel when clicking prev/next buttons', () => {
-    render(<LandingPage />);
+    render(<LandingView />);
     
     // Let's grab the carousel buttons on the first listing card
     // First card: images count: 3

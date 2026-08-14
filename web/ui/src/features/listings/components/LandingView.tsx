@@ -146,7 +146,7 @@ const ListingCard: React.FC<{ listing: Listing }> = ({ listing }) => {
   );
 };
 
-export const LandingPage: React.FC = () => {
+const LandingView: React.FC = () => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [hostFilter, setHostFilter] = useState('');
@@ -264,3 +264,5 @@ export const LandingPage: React.FC = () => {
     </div>
   );
 };
+
+export default LandingView;

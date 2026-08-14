@@ -4,9 +4,10 @@ import { Mail, Lock, LogIn, UserPlus } from 'lucide-react';
 
 interface LoginViewProps {
   onLoginSuccess?: (data: { email: string; isSignUp: boolean }) => void;
+  onForgotPasswordClick?: () => void;
 }
 
-export default function LoginView({ onLoginSuccess }: LoginViewProps) {
+export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: LoginViewProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -186,6 +187,19 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               </span>
             )}
           </div>
+
+          {activeTab === 'login' && onForgotPasswordClick && (
+            <div className="text-right -mt-1.5">
+              <button
+                type="button"
+                onClick={onForgotPasswordClick}
+                disabled={isLoading}
+                className="text-xs font-semibold text-content-secondary hover:text-accent-blue transition-colors cursor-pointer"
+              >
+                {t('auth.buttons.forgotPassword')}
+              </button>
+            </div>
+          )}
 
           {/* Submit Button */}
           <button
