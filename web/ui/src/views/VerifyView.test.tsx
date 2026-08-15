@@ -49,6 +49,14 @@ vi.mock('react-i18next', () => ({
   })
 }));
 
+const mockSetToken = vi.fn();
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    token: null,
+    setToken: mockSetToken,
+  }),
+}));
+
 describe('VerifyView Component', () => {
   const mockVerify = vi.fn();
 
@@ -63,6 +71,7 @@ describe('VerifyView Component', () => {
       clear: vi.fn(),
     });
     mockNavigate.mockClear();
+    mockSetToken.mockClear();
     vi.spyOn(window, 'setTimeout');
   });
 
@@ -108,7 +117,7 @@ describe('VerifyView Component', () => {
     expect(window.setTimeout).toHaveBeenCalledWith(expect.any(Function), 5000);
   });
 
-  it('handles manual code submission successfully and redirects', async () => {
+  it('handles manual code auto-submission successfully and redirects', async () => {
     mockSearchParams = new URLSearchParams('');
     const user = userEvent.setup();
     mockVerify.mockResolvedValueOnce({ status: 'success', token: 'MOCK_TOKEN' });
@@ -118,9 +127,6 @@ describe('VerifyView Component', () => {
     const input = screen.getByLabelText('Enter 6-Digit Code');
     await user.type(input, '123456');
 
-    const submitBtn = screen.getByRole('button', { name: 'Verify Code' });
-    await user.click(submitBtn);
-
     await waitFor(() => {
       expect(mockVerify).toHaveBeenCalledWith({ verification_code: '123456' });
       expect(screen.getByTestId('success-state')).toBeInTheDocument();
@@ -128,6 +134,7 @@ describe('VerifyView Component', () => {
 
     expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'VERIFIED_PENDING_DETAILS');
     expect(localStorage.setItem).toHaveBeenCalledWith('paseto_token', 'MOCK_TOKEN');
+    expect(mockSetToken).toHaveBeenCalledWith('MOCK_TOKEN');
 
     // Callback simulation for redirect
     expect(window.setTimeout).toHaveBeenCalledWith(expect.any(Function), 1500);

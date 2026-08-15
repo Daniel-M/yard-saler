@@ -195,4 +195,27 @@ describe('useUserApi', () => {
     
     getItemSpy.mockRestore();
   });
+
+  it('falls back to localStorage token when context is present but token is null', async () => {
+    // Mock localStorage
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('local-storage-token');
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ success: true }),
+      headers: new Headers(),
+    });
+
+    const { result } = renderHook(() => useUserApi(), { wrapper: nullTokenWrapper });
+
+    await act(async () => {
+      return result.current.preRegister({ email: 'test@example.com' });
+    });
+
+    const callArgs = mockFetch.mock.calls[0][1];
+    expect(callArgs.headers.get('Authorization')).toBe('Bearer local-storage-token');
+    
+    getItemSpy.mockRestore();
+  });
 });

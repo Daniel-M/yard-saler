@@ -309,3 +309,33 @@ func TestUserHandler_LoginAndOAuthCollision(t *testing.T) {
 	}
 }
 
+func TestUserHandler_PreRegisterAlreadyExists(t *testing.T) {
+	db, handler, _ := setupTestApp(t)
+	defer db.Close()
+
+	// 1. First Pre-Registration
+	preReqBody, _ := json.Marshal(dto.UserPreRegisterDTO{
+		Email:    "existing_handler@example.com",
+		Password: "password123",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/user/pre-register", bytes.NewReader(preReqBody))
+	w := httptest.NewRecorder()
+	handler.PreRegister(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200 OK for first pre-registration, got %d", w.Code)
+	}
+
+	// 2. Second Pre-Registration with the same email
+	req = httptest.NewRequest(http.MethodPost, "/user/pre-register", bytes.NewReader(preReqBody))
+	w = httptest.NewRecorder()
+	handler.PreRegister(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Errorf("expected status 409 Conflict, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "user already exists") {
+		t.Errorf("expected error message to contain 'user already exists', got %q", w.Body.String())
+	}
+}
+

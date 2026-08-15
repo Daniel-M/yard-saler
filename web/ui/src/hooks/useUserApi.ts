@@ -25,7 +25,7 @@ export interface UserPasswordResetDTO {
 
 export const useUserApi = () => {
   const context = useContext(AuthContext);
-  const token = context ? context.token : localStorage.getItem('paseto_token');
+  const token = (context && context.token !== null) ? context.token : localStorage.getItem('paseto_token');
   const apiBaseUrl = import.meta.env.VITE_API_URL || '';
   
   const request = async (endpoint: string, options: RequestInit = {}) => {

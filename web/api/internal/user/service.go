@@ -24,6 +24,7 @@ var (
 	ErrOAuthProviderExists   = errors.New("oauth_provider_exists")
 	ErrOAuthProviderRequired = errors.New("oauth_provider_required")
 	ErrInvalidCredentials    = errors.New("invalid credentials")
+	ErrUserAlreadyExists     = errors.New("user already exists")
 )
 
 // UserService coordinates operations on User domain objects.
@@ -55,7 +56,7 @@ func (s *UserService) CreateUser(ctx context.Context, u *domain.User) (*domain.U
 		return nil, fmt.Errorf("failed to check existing user: %w", err)
 	}
 	if existing != nil {
-		return nil, fmt.Errorf("user with email %s already exists", u.Email)
+		return nil, ErrUserAlreadyExists
 	}
 
 	if u.ID == "" {
@@ -94,7 +95,7 @@ func (s *UserService) PreRegisterUser(ctx context.Context, d dto.UserPreRegister
 				return nil, ErrOAuthProviderExists
 			}
 		}
-		return nil, fmt.Errorf("user with email %s already exists", d.Email)
+		return nil, ErrUserAlreadyExists
 	}
 
 	u, err := domain.NewUserFromPreRegister(d)
@@ -112,7 +113,7 @@ func (s *UserService) VerifyUser(ctx context.Context, d dto.UserVerifyDTO) (*dom
 		return nil, fmt.Errorf("failed to fetch user for verification: %w", err)
 	}
 	if u == nil {
-		return nil, ErrUserNotFound
+		return nil, ErrInvalidCode
 	}
 
 	if u.VerifiedAt != nil {

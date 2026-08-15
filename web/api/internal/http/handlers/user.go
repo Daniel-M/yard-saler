@@ -47,6 +47,10 @@ func (h *UserHandler) PreRegister(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "oauth_provider_exists", http.StatusConflict)
 			return
 		}
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

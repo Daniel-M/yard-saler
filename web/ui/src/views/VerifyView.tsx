@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useUserApi } from '../hooks/useUserApi';
+import { useAuth } from '../context/AuthContext';
 
 export interface VerifyViewProps {
   onVerificationSuccess?: (token: string) => void;
@@ -18,6 +19,7 @@ export default function VerifyView({
   const navigate = useNavigate();
   const location = useLocation();
   const { verify } = useUserApi();
+  const { setToken } = useAuth();
 
   const code = searchParams.get('code');
 
@@ -30,6 +32,7 @@ export default function VerifyView({
   const verificationStarted = useRef(false);
 
   const performVerification = async (verificationCode: string) => {
+    if (status === 'loading' || status === 'success') return;
     setStatus('loading');
     setErrorMsg(null);
     try {
@@ -41,6 +44,7 @@ export default function VerifyView({
       if (token) {
         localStorage.setItem('user_status', 'VERIFIED_PENDING_DETAILS');
         localStorage.setItem('paseto_token', token);
+        setToken(token);
       }
       
       if (onVerificationSuccess) {
@@ -86,7 +90,7 @@ export default function VerifyView({
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (manualCode.length === 6) {
+    if (manualCode.length === 6 && status !== 'loading' && status !== 'success') {
       performVerification(manualCode);
     }
   };
@@ -177,7 +181,13 @@ export default function VerifyView({
                   maxLength={6}
                   pattern="\d{6}"
                   value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value.replace(/\D/g, ''))}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setManualCode(val);
+                    if (val.length === 6) {
+                      performVerification(val);
+                    }
+                  }}
                   placeholder={t('auth.verify.manual.placeholder')}
                   className="w-full text-center tracking-[0.5em] text-lg font-bold py-2.5 bg-surface-elevated border border-border-subtle rounded-xl focus:outline-none focus:ring-2 focus:ring-border-interactive/25 focus:border-border-interactive transition-all duration-150 min-h-[48px]"
                   required

@@ -81,8 +81,8 @@ func (d UserPasswordResetDTO) Validate() error {
 type UserVerifyResponseUser struct {
 	ID              string `json:"id"`
 	Email           string `json:"email"`
-	IsVerified      bool   `json:"isVerified"`
-	ProfileComplete bool   `json:"profileComplete"`
+	IsVerified      bool   `json:"is_verified"`
+	ProfileComplete bool   `json:"profile_complete"`
 }
 
 type UserVerifyResponseDTO struct {
