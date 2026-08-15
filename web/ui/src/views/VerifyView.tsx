@@ -33,7 +33,7 @@ export default function VerifyView({
     setStatus('loading');
     setErrorMsg(null);
     try {
-      const data = await verify({ verificationCode });
+      const data = await verify({ verification_code: verificationCode });
       const token = data?.token || '';
 
       setStatus('success');

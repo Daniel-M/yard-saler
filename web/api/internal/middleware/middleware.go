@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/Daniel-M/ys-api/internal/auth"
+	"github.com/Daniel-M/ys-api/internal/logger"
 )
 
 type contextKey string
@@ -28,13 +29,46 @@ func Chain(h http.Handler, middlewares ...Middleware) http.Handler {
 	return h
 }
 
-// Logger logs the method, path, and execution duration of incoming HTTP requests.
+type statusResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (sw *statusResponseWriter) WriteHeader(code int) {
+	sw.statusCode = code
+	sw.ResponseWriter.WriteHeader(code)
+}
+
+func (sw *statusResponseWriter) Write(b []byte) (int, error) {
+	return sw.ResponseWriter.Write(b)
+}
+
+// Logger logs the method, path, and execution duration of incoming HTTP requests using slog.
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		log.Printf("Started %s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-		log.Printf("Completed %s %s in %v", r.Method, r.URL.Path, time.Since(start))
+		traceID := logger.GenerateTraceID()
+		ctx := logger.WithTraceID(r.Context(), traceID)
+
+		w.Header().Set("X-Trace-ID", traceID)
+
+		sw := &statusResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		slog.DebugContext(ctx, "Request started",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+		)
+
+		next.ServeHTTP(sw, r.WithContext(ctx))
+
+		latency := time.Since(start)
+
+		slog.InfoContext(ctx, "Request completed",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Int("status_code", sw.statusCode),
+			slog.Float64("latency_ms", float64(latency.Nanoseconds())/1e6),
+		)
 	})
 }
 

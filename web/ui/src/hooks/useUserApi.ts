@@ -8,7 +8,7 @@ export interface UserPreRegisterDTO {
 
 export interface UserVerifyDTO {
   email?: string;
-  verificationCode: string;
+  verification_code: string;
 }
 
 export interface UserDTO {
@@ -26,6 +26,7 @@ export interface UserPasswordResetDTO {
 export const useUserApi = () => {
   const context = useContext(AuthContext);
   const token = context ? context.token : localStorage.getItem('paseto_token');
+  const apiBaseUrl = import.meta.env.VITE_API_URL || '';
   
   const request = async (endpoint: string, options: RequestInit = {}) => {
     const headers = new Headers(options.headers || {});
@@ -35,7 +36,7 @@ export const useUserApi = () => {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
       ...options,
       headers,
     });

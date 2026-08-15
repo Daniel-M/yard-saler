@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -25,11 +26,21 @@ type DatabaseConfig struct {
 	Driver string `mapstructure:"driver"`
 }
 
+type CORSConfig struct {
+	AllowedOrigins []string `mapstructure:"allowed_origins"`
+}
+
+type LoggingConfig struct {
+	Level string `mapstructure:"level"`
+}
+
 type Config struct {
 	Security SecurityConfig `mapstructure:"security"`
 	Auth     AuthConfig     `mapstructure:"auth"`
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
+	CORS     CORSConfig     `mapstructure:"cors"`
+	Logging  LoggingConfig  `mapstructure:"logging"`
 }
 
 // LoadConfig reads configuration from a config.toml file or environment variables.
@@ -39,6 +50,7 @@ func LoadConfig(path string) (*Config, error) {
 	v.SetDefault("server.port", "8080")
 	v.SetDefault("database.driver", "sqlite3")
 	v.SetDefault("auth.token_ttl", time.Hour)
+	v.SetDefault("logging.level", "debug")
 
 	v.AddConfigPath(path)
 	v.SetConfigName("config")
@@ -57,6 +69,14 @@ func LoadConfig(path string) (*Config, error) {
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	if envVal := os.Getenv("APP_CORS_ALLOWED_ORIGINS"); envVal != "" {
+		origins := strings.Split(envVal, ",")
+		for i, o := range origins {
+			origins[i] = strings.TrimSpace(o)
+		}
+		config.CORS.AllowedOrigins = origins
 	}
 
 	if config.Security.Pepper == "" {

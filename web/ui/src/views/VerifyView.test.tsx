@@ -122,7 +122,7 @@ describe('VerifyView Component', () => {
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(mockVerify).toHaveBeenCalledWith({ verificationCode: '123456' });
+      expect(mockVerify).toHaveBeenCalledWith({ verification_code: '123456' });
       expect(screen.getByTestId('success-state')).toBeInTheDocument();
     });
 

@@ -31,3 +31,5 @@ Project Whale Shark is a responsive, installable Yard-Sale (PWA) application des
 2.  **Validation & Testing Workflow:** Run tests and linting (`pnpm run test` and `pnpm run lint` for frontend; `go test ./...` and `go vet ./...` for backend) exactly once, immediately after finishing ALL implementation tasks. Do not run tests or linting tools dynamically after intermediate code edits or task steps.
 3.  **Dependencies Constraint:** Do not install external npm packages unless explicitly requested by the user.
 4.  **Grill-Me Protocol:** Before writing specifications or implementing features, conduct a grill-me interview to clarify requirements and design decisions one-by-one, providing recommended options.
+5.  **API Contracts & DTOs:** All API Contracts and JSON DTOs must use snake_case (e.g., `verification_code`) even if internal models/variables are not.
+

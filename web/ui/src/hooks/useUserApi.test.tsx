@@ -66,12 +66,12 @@ describe('useUserApi', () => {
     const { result } = renderHook(() => useUserApi(), { wrapper });
 
     const response = await act(async () => {
-      return result.current.verify({ email: 'test@example.com', verificationCode: '123456' });
+      return result.current.verify({ email: 'test@example.com', verification_code: '123456' });
     });
 
     expect(mockFetch).toHaveBeenCalledWith('/user/verify', expect.objectContaining({
       method: 'POST',
-      body: JSON.stringify({ email: 'test@example.com', verificationCode: '123456' }),
+      body: JSON.stringify({ email: 'test@example.com', verification_code: '123456' }),
     }));
     expect(response).toEqual({ success: true });
   });
