@@ -41,20 +41,20 @@
 
 :root.light {
   /* Light Mode values */
-  --canvas: #F8FAFC;
+  --canvas: #F4F5F6;
   --surface: #FFFFFF;
-  --surface-elevated: #F1F5F9;
+  --surface-elevated: #F8FAFC;
   
-  --content-primary: #0F172A;
-  --content-secondary: #475569;
-  --content-muted: #94A3B8;
+  --content-primary: #1A1D21;
+  --content-secondary: #4B5563;
+  --content-muted: #6B7280;
 
-  --accent-purple: #7C3AED;
-  --accent-purple-hover: #6D28D9;
+  --accent-purple: #4F46E5;
+  --accent-purple-hover: #4338CA;
   
-  --accent-blue: #0284C7;
-  --accent-blue-hover: #0369A1;
+  --accent-blue: #2563EB;
+  --accent-blue-hover: #1D4ED8;
 
-  --border-subtle: #E2E8F0;
-  --border-interactive: #4F46E5;
+  --border-subtle: #D1D5DB;
+  --border-interactive: #2563EB;
 }

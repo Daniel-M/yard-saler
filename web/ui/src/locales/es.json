@@ -23,6 +23,10 @@
       "toggleLabel": "Cambiar tema de color",
       "darkMode": "Modo oscuro",
       "lightMode": "Modo claro"
+    },
+    "language": {
+      "toggleLabel": "Cambiar a Inglés",
+      "currentCode": "ES"
     }
   },
   "auth": {
@@ -36,7 +40,9 @@
       "email": "Correo electrónico",
       "emailPlaceholder": "correo@ejemplo.com",
       "password": "Contraseña",
-      "passwordPlaceholder": "••••••••"
+      "passwordPlaceholder": "••••••••",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
     },
     "buttons": {
       "loginSubmit": "Ingresar",
@@ -52,6 +58,36 @@
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
       "emailRequired": "El correo electrónico es requerido.",
       "passwordRequired": "La contraseña es requerida."
+    },
+    "verify": {
+      "title": "Verificando Dirección de Correo",
+      "loading": "Por favor, espera mientras confirmamos tu correo...",
+      "success": "¡Correo verificado con éxito! Redirigiendo...",
+      "error": {
+        "title": "Verificación Fallida",
+        "missingCode": "No se proporcionó ningún código de verificación en la URL.",
+        "invalidCode": "El código de verificación no es válido o ha expirado.",
+        "retry": "Intentar de nuevo",
+        "backToLogin": "Volver a iniciar sesión"
+      }
+    },
+    "registerDetails": {
+      "title": "Completar Registro",
+      "subtitle": "Cuéntanos un poco más sobre ti para comenzar",
+      "fields": {
+        "fullName": "Nombre Completo",
+        "fullNamePlaceholder": "Juan Pérez",
+        "location": "Ubicación (Ciudad, Código Postal)",
+        "locationPlaceholder": "ej. Seattle, WA 98101",
+        "phone": "Número de Teléfono (Opcional)",
+        "phonePlaceholder": "(555) 000-0000"
+      },
+      "submit": "Completar Registro",
+      "errors": {
+        "fullNameRequired": "El nombre completo es requerido.",
+        "locationRequired": "La ubicación es requerida.",
+        "generic": "Algo salió mal. Por favor, verifica los detalles e intenta de nuevo."
+      }
     }
   },
   "recovery": {
@@ -72,6 +108,21 @@
     "errors": {
       "emailRequired": "El correo electrónico es requerido.",
       "invalidEmail": "Por favor, ingresa un correo electrónico válido."
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Bienvenido a Whale Shark",
+      "subtitle": "La plataforma definitiva para gestionar tus proyectos con velocidad y seguridad.",
+      "ctaPrimary": "Comenzar gratis",
+      "ctaSecondary": "Saber más"
+    },
+    "features": {
+      "speed": { "title": "Rendimiento ultrarrápido", "desc": "Construido en Go y React 19." },
+      "security": { "title": "Seguridad de nivel bancario", "desc": "Tus datos siempre protegidos." }
+    },
+    "footer": {
+      "rights": "© 2026 Project Whale Shark. Todos los derechos reservados."
     }
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock, LogIn, UserPlus } from 'lucide-react';
+import { PasswordInput } from '../components/PasswordInput';
 
 interface LoginViewProps {
   onLoginSuccess?: (data: { email: string; isSignUp: boolean }) => void;
@@ -161,16 +162,15 @@ export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: Log
               {t('auth.fields.password')}
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-content-muted">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-content-muted z-10 animate-in fade-in duration-200">
                 <Lock className="h-4 w-4" />
               </span>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('auth.fields.passwordPlaceholder')}
-                className={`w-full pl-10 pr-4 py-2.5 bg-surface-elevated border rounded-xl text-sm text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 transition-all duration-150 ${
+                className={`w-full pl-10 pr-12 py-2.5 bg-surface-elevated border rounded-xl text-sm text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 transition-all duration-150 ${
                   errors.password
                     ? 'border-rose-500 focus:ring-rose-500/25 focus:border-rose-500'
                     : 'border-border-subtle focus:ring-border-interactive/25 focus:border-border-interactive'

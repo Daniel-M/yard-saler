@@ -66,6 +66,15 @@ func main() {
 	mux.HandleFunc("PUT /users/{id}", userHandler.UpdateUser)
 	mux.HandleFunc("DELETE /users/{id}", userHandler.DeleteUser)
 
+	// New User workflows
+	mux.HandleFunc("POST /user/pre-register", userHandler.PreRegister)
+	mux.HandleFunc("POST /user/verify", userHandler.Verify)
+	mux.HandleFunc("POST /user/password-reset", userHandler.PasswordReset)
+
+	// PASETO protected route
+	authMiddleware := middleware.Auth(tokenIssuer)
+	mux.Handle("PUT /user/edit-details", authMiddleware(http.HandlerFunc(userHandler.EditDetails)))
+
 	handler := middleware.Chain(mux, middleware.Logger)
 
 	serverPort := cfg.Server.Port

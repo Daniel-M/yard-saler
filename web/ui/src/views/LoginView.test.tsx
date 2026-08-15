@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import LoginView from '../LoginView';
+import LoginView from './LoginView';
 
 // Mock react-i18next with Spanish translation keys
 vi.mock('react-i18next', () => ({
@@ -16,6 +16,8 @@ vi.mock('react-i18next', () => ({
         'auth.fields.emailPlaceholder': 'correo@ejemplo.com',
         'auth.fields.password': 'Contraseña',
         'auth.fields.passwordPlaceholder': '••••••••',
+        'auth.fields.showPassword': 'Mostrar contraseña',
+        'auth.fields.hidePassword': 'Ocultar contraseña',
         'auth.buttons.loginSubmit': 'Ingresar',
         'auth.buttons.signupSubmit': 'Crear Cuenta',
         'auth.buttons.googleOAuth': 'Continuar con Google',
@@ -57,7 +59,7 @@ describe('LoginView Component', () => {
     expect(screen.getByLabelText(/correo electrónico/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/correo@ejemplo.com/i)).toBeInTheDocument();
 
-    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^contraseña$/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/••••••••/i)).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: /ingresar/i })).toBeInTheDocument();
@@ -102,7 +104,7 @@ describe('LoginView Component', () => {
     render(<LoginView />);
 
     const emailInput = screen.getByLabelText(/correo electrónico/i);
-    const passwordInput = screen.getByLabelText(/contraseña/i);
+    const passwordInput = screen.getByLabelText(/^contraseña$/i);
     const submitBtn = screen.getByRole('button', { name: /ingresar/i });
 
     await user.type(emailInput, 'invalidemail');
@@ -117,7 +119,7 @@ describe('LoginView Component', () => {
     render(<LoginView />);
 
     const emailInput = screen.getByLabelText(/correo electrónico/i);
-    const passwordInput = screen.getByLabelText(/contraseña/i);
+    const passwordInput = screen.getByLabelText(/^contraseña$/i);
     const submitBtn = screen.getByRole('button', { name: /ingresar/i });
 
     await user.type(emailInput, 'test@example.com');
@@ -135,7 +137,7 @@ describe('LoginView Component', () => {
     render(<LoginView onLoginSuccess={handleLoginSuccess} />);
 
     const emailInput = screen.getByLabelText(/correo electrónico/i);
-    const passwordInput = screen.getByLabelText(/contraseña/i);
+    const passwordInput = screen.getByLabelText(/^contraseña$/i);
     const submitBtn = screen.getByRole('button', { name: /ingresar/i });
 
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });

@@ -23,6 +23,10 @@
       "toggleLabel": "Toggle color theme",
       "darkMode": "Dark mode",
       "lightMode": "Light mode"
+    },
+    "language": {
+      "toggleLabel": "Switch to Spanish",
+      "currentCode": "EN"
     }
   },
   "auth": {
@@ -36,7 +40,9 @@
       "email": "Email Address",
       "emailPlaceholder": "you@example.com",
       "password": "Password",
-      "passwordPlaceholder": "••••••••"
+      "passwordPlaceholder": "••••••••",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
     },
     "buttons": {
       "loginSubmit": "Log In",
@@ -52,6 +58,36 @@
       "passwordTooShort": "Password must be at least 8 characters long.",
       "emailRequired": "Email is required.",
       "passwordRequired": "Password is required."
+    },
+    "verify": {
+      "title": "Verifying Email Address",
+      "loading": "Please wait while we confirm your email...",
+      "success": "Email verified successfully! Redirecting...",
+      "error": {
+        "title": "Verification Failed",
+        "missingCode": "No verification code was provided in the URL.",
+        "invalidCode": "The verification code is invalid or has expired.",
+        "retry": "Try Again",
+        "backToLogin": "Back to Login"
+      }
+    },
+    "registerDetails": {
+      "title": "Complete Registration",
+      "subtitle": "Tell us a bit more about yourself to get started",
+      "fields": {
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "John Doe",
+        "location": "Location (City, Zip Code)",
+        "locationPlaceholder": "e.g., Seattle, WA 98101",
+        "phone": "Phone Number (Optional)",
+        "phonePlaceholder": "(555) 000-0000"
+      },
+      "submit": "Complete Registration",
+      "errors": {
+        "fullNameRequired": "Full Name is required.",
+        "locationRequired": "Location is required.",
+        "generic": "Something went wrong. Please check details and try again."
+      }
     }
   },
   "recovery": {
@@ -72,6 +108,21 @@
     "errors": {
       "emailRequired": "Email is required.",
       "invalidEmail": "Please enter a valid email address."
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Welcome to Whale Shark",
+      "subtitle": "The ultimate platform to manage your projects with speed and security.",
+      "ctaPrimary": "Start for free",
+      "ctaSecondary": "Learn more"
+    },
+    "features": {
+      "speed": { "title": "Lightning fast performance", "desc": "Built on Go and React 19." },
+      "security": { "title": "Bank-grade security", "desc": "Your data is always protected." }
+    },
+    "footer": {
+      "rights": "© 2026 Project Whale Shark. All rights reserved."
     }
   }
 }

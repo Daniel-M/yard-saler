@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Layers, Wifi, WifiOff, Download, Menu, X } from 'lucide-react';
 import { ThemeToggle } from '../ThemeToggle';
+import { LanguageToggle } from '../LanguageToggle';
 
 interface HeaderProps {
   isOnline?: boolean;
@@ -95,6 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Download className="h-3.5 w-3.5" /> {t('header.installApp')}
             </button>
           )}
+          <LanguageToggle />
           <ThemeToggle />
         </div>
 
@@ -120,6 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          <LanguageToggle />
           <ThemeToggle />
 
           <button
