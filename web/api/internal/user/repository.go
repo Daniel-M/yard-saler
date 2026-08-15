@@ -16,4 +16,8 @@ type UserRepository interface {
 	Update(ctx context.Context, user *domain.User) (*domain.User, error)
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, offset, limit int) ([]*domain.User, int, error)
+
+	FindIdentity(ctx context.Context, provider, providerUID string) (*domain.UserIdentity, error)
+	FindIdentitiesByUserID(ctx context.Context, userID string) ([]*domain.UserIdentity, error)
+	CreateIdentity(ctx context.Context, identity *domain.UserIdentity) (*domain.UserIdentity, error)
 }

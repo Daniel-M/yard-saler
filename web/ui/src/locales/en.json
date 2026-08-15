@@ -59,10 +59,31 @@
       "emailRequired": "Email is required.",
       "passwordRequired": "Password is required."
     },
+    "login": {
+      "error": {
+        "oauthRequired": "This account was created using Google Login. Please click the 'Log in with Google' button below."
+      }
+    },
+    "signup": {
+      "error": {
+        "oauthExists": "An account with this email already exists via Google Login. Click here to log in with Google, or click 'Forgot Password' to set up a password for this account."
+      }
+    },
+    "unverifiedBanner": {
+      "text": "You are browsing in restricted mode. Verify your email to create listings and message sellers.",
+      "link": "Verify Email"
+    },
     "verify": {
       "title": "Verifying Email Address",
       "loading": "Please wait while we confirm your email...",
       "success": "Email verified successfully! Redirecting...",
+      "toastSent": "Verification code sent! Please check your email.",
+      "exploreAsGuest": "Explore as Guest (Restricted)",
+      "manual": {
+        "label": "Enter 6-Digit Code",
+        "placeholder": "123456",
+        "submit": "Verify Code"
+      },
       "error": {
         "title": "Verification Failed",
         "missingCode": "No verification code was provided in the URL.",

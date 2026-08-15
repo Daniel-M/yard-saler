@@ -13,6 +13,7 @@ vi.mock('../hooks/useUserApi', () => ({
 // Setup mocks for react-router-dom
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
+let mockLocation: { state: any } = { state: null };
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -20,6 +21,7 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     useNavigate: () => mockNavigate,
     useSearchParams: () => [mockSearchParams, vi.fn()],
+    useLocation: () => mockLocation,
   };
 });
 
@@ -31,6 +33,10 @@ vi.mock('react-i18next', () => ({
         'auth.verify.title': 'Verifying Email Address',
         'auth.verify.loading': 'Please wait while we confirm your email...',
         'auth.verify.success': 'Email verified successfully! Redirecting...',
+        'auth.verify.toastSent': 'Verification code sent! Please check your email.',
+        'auth.verify.exploreAsGuest': 'Explore as Guest (Restricted)',
+        'auth.verify.manual.label': 'Enter 6-Digit Code',
+        'auth.verify.manual.submit': 'Verify Code',
         'auth.verify.error.title': 'Verification Failed',
         'auth.verify.error.missingCode': 'No verification code was provided in the URL.',
         'auth.verify.error.invalidCode': 'The verification code is invalid or has expired.',
@@ -50,17 +56,25 @@ describe('VerifyView Component', () => {
     vi.mocked(useUserApi).mockReturnValue({
       verify: mockVerify,
     } as any);
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    });
     mockNavigate.mockClear();
     vi.spyOn(window, 'setTimeout');
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
     mockVerify.mockClear();
     mockSearchParams = new URLSearchParams();
+    mockLocation = { state: null };
   });
 
-  it('renders loading state immediately when verification code is present', async () => {
+  it('renders loading state immediately when verification code is present in URL', async () => {
     mockSearchParams = new URLSearchParams('code=TEST_CODE');
     mockVerify.mockReturnValueOnce(new Promise(() => {}));
 
@@ -71,63 +85,73 @@ describe('VerifyView Component', () => {
     expect(screen.getByText('Please wait while we confirm your email...')).toBeInTheDocument();
   });
 
-  it('renders error state immediately if verification code is missing', async () => {
+  it('renders idle state with manual entry when verification code is missing', async () => {
     mockSearchParams = new URLSearchParams('');
-    const onVerificationErrorMock = vi.fn();
+    render(<VerifyView />);
 
-    render(<VerifyView onVerificationError={onVerificationErrorMock} />);
-
-    expect(screen.getByTestId('error-state')).toBeInTheDocument();
-    expect(screen.getByText('Verification Failed')).toBeInTheDocument();
-    expect(screen.getByText('No verification code was provided in the URL.')).toBeInTheDocument();
-    expect(onVerificationErrorMock).toHaveBeenCalledWith('No verification code was provided in the URL.');
+    expect(screen.getByTestId('idle-state')).toBeInTheDocument();
+    expect(screen.getByLabelText('Enter 6-Digit Code')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Verify Code' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Explore as Guest (Restricted)' })).toBeInTheDocument();
   });
 
-  it('handles successful verification, executes callbacks, and redirects', async () => {
-    mockSearchParams = new URLSearchParams('code=VALID_CODE');
-    const onVerificationSuccessMock = vi.fn();
-    
+  it('renders signup toast if location state contains fromSignUp', async () => {
+    mockSearchParams = new URLSearchParams('');
+    mockLocation = { state: { fromSignUp: true } };
+
+    render(<VerifyView />);
+
+    expect(screen.getByTestId('signup-toast')).toBeInTheDocument();
+    expect(screen.getByText('Verification code sent! Please check your email.')).toBeInTheDocument();
+
+    // Verify setTimeout was called to dismiss toast after 5000ms
+    expect(window.setTimeout).toHaveBeenCalledWith(expect.any(Function), 5000);
+  });
+
+  it('handles manual code submission successfully and redirects', async () => {
+    mockSearchParams = new URLSearchParams('');
+    const user = userEvent.setup();
     mockVerify.mockResolvedValueOnce({ status: 'success', token: 'MOCK_TOKEN' });
 
-    render(<VerifyView onVerificationSuccess={onVerificationSuccessMock} />);
+    render(<VerifyView />);
 
-    // Success state should be rendered
+    const input = screen.getByLabelText('Enter 6-Digit Code');
+    await user.type(input, '123456');
+
+    const submitBtn = screen.getByRole('button', { name: 'Verify Code' });
+    await user.click(submitBtn);
+
     await waitFor(() => {
+      expect(mockVerify).toHaveBeenCalledWith({ verificationCode: '123456' });
       expect(screen.getByTestId('success-state')).toBeInTheDocument();
-      expect(screen.getByText('Email verified successfully! Redirecting...')).toBeInTheDocument();
     });
 
-    expect(mockVerify).toHaveBeenCalledWith({ verificationCode: 'VALID_CODE' });
+    expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'VERIFIED_PENDING_DETAILS');
+    expect(localStorage.setItem).toHaveBeenCalledWith('paseto_token', 'MOCK_TOKEN');
 
-    expect(onVerificationSuccessMock).toHaveBeenCalledWith('MOCK_TOKEN');
-
-    // Verify setTimeout was called and trigger the callback manually to check redirect
+    // Callback simulation for redirect
     expect(window.setTimeout).toHaveBeenCalledWith(expect.any(Function), 1500);
-    const verifyCall = vi.mocked(window.setTimeout).mock.calls.find(c => c[1] === 1500);
-    expect(verifyCall).toBeDefined();
-    const callback = verifyCall![0] as Function;
-    callback();
+    const redirectCall = vi.mocked(window.setTimeout).mock.calls.find(c => c[1] === 1500);
+    expect(redirectCall).toBeDefined();
+    redirectCall![0]();
 
     expect(mockNavigate).toHaveBeenCalledWith('/register-details');
   });
 
-  it('handles verification failure and shows error state', async () => {
-    mockSearchParams = new URLSearchParams('code=INVALID_CODE');
-    const onVerificationErrorMock = vi.fn();
-    
-    mockVerify.mockRejectedValueOnce(new Error('The verification code is invalid or has expired.'));
+  it('handles explore as guest skip option', async () => {
+    mockSearchParams = new URLSearchParams('');
+    const user = userEvent.setup();
 
-    render(<VerifyView onVerificationError={onVerificationErrorMock} />);
+    render(<VerifyView />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('error-state')).toBeInTheDocument();
-      expect(screen.getByText('The verification code is invalid or has expired.')).toBeInTheDocument();
-    });
+    const guestBtn = screen.getByRole('button', { name: 'Explore as Guest (Restricted)' });
+    await user.click(guestBtn);
 
-    expect(onVerificationErrorMock).toHaveBeenCalledWith('The verification code is invalid or has expired.');
+    expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'UNVERIFIED');
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 
-  it('allows retrying verification on failure', async () => {
+  it('allows retrying verification on manual or URL code failure', async () => {
     mockSearchParams = new URLSearchParams('code=RETRY_CODE');
     const user = userEvent.setup();
     
@@ -137,32 +161,17 @@ describe('VerifyView Component', () => {
 
     render(<VerifyView />);
 
-    // Check failed state first
     await waitFor(() => {
       expect(screen.getByTestId('error-state')).toBeInTheDocument();
     });
 
-    // Click retry button
     const retryBtn = screen.getByRole('button', { name: /try again/i });
     await user.click(retryBtn);
 
-    // Should render success state now
     await waitFor(() => {
       expect(screen.getByTestId('success-state')).toBeInTheDocument();
     });
 
     expect(mockVerify).toHaveBeenCalledTimes(2);
-  });
-
-  it('navigates back to login when back to login button is clicked', async () => {
-    mockSearchParams = new URLSearchParams('');
-    const user = userEvent.setup();
-
-    render(<VerifyView />);
-
-    const backBtn = screen.getByRole('button', { name: /back to login/i });
-    await user.click(backBtn);
-
-    expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 });

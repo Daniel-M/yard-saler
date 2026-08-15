@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RegistrationDetailsView from './RegistrationDetailsView';
+import { useUserApi } from '../hooks/useUserApi';
+
+const mockEditDetails = vi.fn();
+vi.mock('../hooks/useUserApi', () => ({
+  useUserApi: vi.fn(() => ({
+    editDetails: mockEditDetails,
+  })),
+}));
 
 // Setup mocks for react-router-dom
 const mockNavigate = vi.fn();
@@ -40,18 +48,39 @@ vi.mock('react-i18next', () => ({
 
 describe('RegistrationDetailsView Component', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn());
     vi.stubGlobal('localStorage', {
-      getItem: vi.fn().mockReturnValue('MOCK_ACCESS_TOKEN'),
+      getItem: vi.fn().mockImplementation((key) => {
+        if (key === 'paseto_token' || key === 'token') {
+          return 'MOCK_ACCESS_TOKEN';
+        }
+        return null;
+      }),
       setItem: vi.fn(),
+      removeItem: vi.fn(),
       clear: vi.fn(),
     });
     mockNavigate.mockClear();
+    mockEditDetails.mockClear();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+  });
+
+  it('redirects to login if there is no token', () => {
+    vi.mocked(localStorage.getItem).mockReturnValue(null);
+    render(<RegistrationDetailsView />);
+    expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
+  });
+
+  it('redirects to dashboard if user status is VERIFIED_COMPLETE', () => {
+    vi.mocked(localStorage.getItem).mockImplementation((key) => {
+      if (key === 'user_status') return 'VERIFIED_COMPLETE';
+      return 'MOCK_ACCESS_TOKEN';
+    });
+    render(<RegistrationDetailsView />);
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
 
   it('renders all form elements, labels, and placeholders correctly', () => {
@@ -86,18 +115,14 @@ describe('RegistrationDetailsView Component', () => {
 
     expect(screen.getByText('Full Name is required.')).toBeInTheDocument();
     expect(screen.getByText('Location is required.')).toBeInTheDocument();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(mockEditDetails).not.toHaveBeenCalled();
   });
 
-  it('submits form successfully and calls callbacks on 200 response', async () => {
+  it('submits form successfully and calls callbacks on successful response', async () => {
     const user = userEvent.setup();
     const onCompleteMock = vi.fn();
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => ({ status: 'success', message: 'Registration complete' }),
-    } as Response);
+    mockEditDetails.mockResolvedValueOnce({ success: true });
 
     render(<RegistrationDetailsView onRegistrationComplete={onCompleteMock} />);
 
@@ -109,33 +134,25 @@ describe('RegistrationDetailsView Component', () => {
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/v1/auth/register-details', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer MOCK_ACCESS_TOKEN',
-        },
-        body: JSON.stringify({
-          fullName: 'Alice Smith',
-          location: 'San Francisco, CA 94105',
-          phone: '5551234567',
-        }),
+      expect(mockEditDetails).toHaveBeenCalledWith({
+        firstName: 'Alice',
+        lastName: 'Smith',
+        mobilePhone: '5551234567',
+        socials: ['San Francisco, CA 94105'],
       });
     });
 
     await waitFor(() => {
+      expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'VERIFIED_COMPLETE');
       expect(onCompleteMock).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
     });
   });
 
   it('shows API error message if API registration fails', async () => {
     const user = userEvent.setup();
 
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: false,
-      status: 400,
-    } as Response);
+    mockEditDetails.mockRejectedValueOnce(new Error('API failure'));
 
     render(<RegistrationDetailsView />);
 
@@ -147,7 +164,7 @@ describe('RegistrationDetailsView Component', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('api-error-alert')).toBeInTheDocument();
-      expect(screen.getByText('Something went wrong. Please check details and try again.')).toBeInTheDocument();
+      expect(screen.getByText('API failure')).toBeInTheDocument();
     });
   });
 });

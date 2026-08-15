@@ -3,6 +3,8 @@ package user_test
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
+	"errors"
 	"testing"
 	"time"
 
@@ -69,16 +71,20 @@ func TestUserService_PreRegisterAndVerify(t *testing.T) {
 	verifyDTO := dto.UserVerifyDTO{
 		VerificationCode: "000000",
 	}
-	err = svc.VerifyUser(ctx, verifyDTO)
+	_, err = svc.VerifyUser(ctx, verifyDTO)
 	if err == nil {
 		t.Error("expected error verifying with wrong code, got nil")
 	}
 
 	// Verify with correct code
 	verifyDTO.VerificationCode = *fetched.VerificationCode
-	err = svc.VerifyUser(ctx, verifyDTO)
+	verified, err := svc.VerifyUser(ctx, verifyDTO)
 	if err != nil {
 		t.Fatalf("failed to verify user: %v", err)
+	}
+
+	if verified == nil {
+		t.Error("expected verified user to be returned, got nil")
 	}
 
 	// Fetch again to verify verified state
@@ -192,3 +198,86 @@ func TestUserService_PasswordReset(t *testing.T) {
 		t.Error("expected reset code expiration to be cleared")
 	}
 }
+
+func TestUserService_OAuthAndCollision(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	repo := user.NewSqliteUserRepository(db)
+	svc := user.NewUserService(repo)
+
+	ctx := context.Background()
+
+	// Helper to generate mock Google JWT
+	makeGoogleToken := func(email, sub string) string {
+		claims := `{"email":"` + email + `","sub":"` + sub + `","email_verified":true,"given_name":"Google","family_name":"User"}`
+		encodedClaims := base64.RawURLEncoding.EncodeToString([]byte(claims))
+		return "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ." + encodedClaims + ".signature"
+	}
+
+	// 1. Register a user via Google OAuth (non-existent email)
+	token1 := makeGoogleToken("oauth_only@example.com", "sub_oauth_123")
+	u1, err := svc.OAuthGoogle(ctx, token1)
+	if err != nil {
+		t.Fatalf("failed to login/register with google: %v", err)
+	}
+	if u1.Email != "oauth_only@example.com" {
+		t.Errorf("expected email oauth_only@example.com, got %s", u1.Email)
+	}
+
+	// 2. Try to Pre-Register with same email (Email/Password Sign-Up with Existing Google OAuth Account)
+	preDTO := dto.UserPreRegisterDTO{
+		Email:     "oauth_only@example.com",
+		Password:  "password123",
+		FirstName: "Jane",
+		LastName:  "Doe",
+	}
+	_, err = svc.PreRegisterUser(ctx, preDTO)
+	if err == nil {
+		t.Fatal("expected error pre-registering with google email, got nil")
+	}
+	if !errors.Is(err, user.ErrOAuthProviderExists) {
+		t.Errorf("expected ErrOAuthProviderExists, got %v", err)
+	}
+
+	// 3. Try to Login using Email/Password with same email (Email/Password Login with OAuth-Only Account)
+	_, err = svc.LoginUser(ctx, "oauth_only@example.com", "password123")
+	if err == nil {
+		t.Fatal("expected error logging in with oauth-only email, got nil")
+	}
+	if !errors.Is(err, user.ErrOAuthProviderRequired) {
+		t.Errorf("expected ErrOAuthProviderRequired, got %v", err)
+	}
+
+	// 4. Register a local user (Email/Password)
+	preLocalDTO := dto.UserPreRegisterDTO{
+		Email:     "local_user@example.com",
+		Password:  "password123",
+		FirstName: "John",
+		LastName:  "Doe",
+	}
+	uLocal, err := svc.PreRegisterUser(ctx, preLocalDTO)
+	if err != nil {
+		t.Fatalf("failed to pre-register local user: %v", err)
+	}
+
+	// 5. Google OAuth Login with Existing Email/Password Account (Automatic Merging)
+	token2 := makeGoogleToken("local_user@example.com", "sub_local_123")
+	uMerged, err := svc.OAuthGoogle(ctx, token2)
+	if err != nil {
+		t.Fatalf("failed to oauth-login/merge: %v", err)
+	}
+	if uMerged.ID != uLocal.ID {
+		t.Errorf("expected merged user ID to be %s, got %s", uLocal.ID, uMerged.ID)
+	}
+
+	// Verify both local login and google identity now work for this user
+	uLoggedIn, err := svc.LoginUser(ctx, "local_user@example.com", "password123")
+	if err != nil {
+		t.Fatalf("local login failed after merging: %v", err)
+	}
+	if uLoggedIn.ID != uLocal.ID {
+		t.Errorf("expected logged in user ID to be %s, got %s", uLocal.ID, uLoggedIn.ID)
+	}
+}
+

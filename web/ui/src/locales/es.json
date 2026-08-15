@@ -59,10 +59,31 @@
       "emailRequired": "El correo electrónico es requerido.",
       "passwordRequired": "La contraseña es requerida."
     },
+    "login": {
+      "error": {
+        "oauthRequired": "Este correo está asociado a una cuenta de Google. Inicia sesión con Google."
+      }
+    },
+    "signup": {
+      "error": {
+        "oauthExists": "Ya existe una cuenta con este correo a través de Google. Inicia sesión con Google o recupera tu contraseña."
+      }
+    },
+    "unverifiedBanner": {
+      "text": "Estás navegando en modo restringido. Verifica tu correo para crear publicaciones y enviar mensajes.",
+      "link": "Verificar Correo"
+    },
     "verify": {
       "title": "Verificando Dirección de Correo",
       "loading": "Por favor, espera mientras confirmamos tu correo...",
       "success": "¡Correo verificado con éxito! Redirigiendo...",
+      "toastSent": "¡Código de verificación enviado! Por favor, revisa tu correo electrónico.",
+      "exploreAsGuest": "Explorar como Invitado (Restringido)",
+      "manual": {
+        "label": "Ingresa el código de 6 dígitos",
+        "placeholder": "123456",
+        "submit": "Verificar Código"
+      },
       "error": {
         "title": "Verificación Fallida",
         "missingCode": "No se proporcionó ningún código de verificación en la URL.",

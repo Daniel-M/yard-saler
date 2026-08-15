@@ -51,12 +51,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize access token issuer: %v", err)
 	}
-	_ = tokenIssuer // Will be used in handlers or middleware for token validation/minting
 
 	// 5. Setup repositories, services, and handlers
 	userRepo := user.NewSqliteUserRepository(db)
 	userService := user.NewUserService(userRepo)
-	userHandler := handlers.NewUserHandler(userService)
+	userHandler := handlers.NewUserHandler(userService, tokenIssuer)
 
 	// 6. Router setup
 	mux := http.NewServeMux()
@@ -70,6 +69,8 @@ func main() {
 	mux.HandleFunc("POST /user/pre-register", userHandler.PreRegister)
 	mux.HandleFunc("POST /user/verify", userHandler.Verify)
 	mux.HandleFunc("POST /user/password-reset", userHandler.PasswordReset)
+	mux.HandleFunc("POST /user/login", userHandler.Login)
+	mux.HandleFunc("POST /user/oauth/google", userHandler.OAuthGoogle)
 
 	// PASETO protected route
 	authMiddleware := middleware.Auth(tokenIssuer)

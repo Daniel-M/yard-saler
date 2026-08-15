@@ -6,7 +6,11 @@ export default function LoginPage() {
 
   const handleLoginSuccess = (data: { email: string; isSignUp: boolean }) => {
     console.log('Login success:', data);
-    navigate('/');
+    if (data.isSignUp) {
+      navigate('/verify', { state: { fromSignUp: true } });
+    } else {
+      navigate('/');
+    }
   };
 
   const handleForgotPasswordClick = () => {

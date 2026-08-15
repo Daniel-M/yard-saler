@@ -1,6 +1,7 @@
 import React from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { UnverifiedBanner } from './UnverifiedBanner';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   return (
     <div className="min-h-screen bg-canvas text-content-primary flex flex-col font-sans transition-colors duration-150">
+      <UnverifiedBanner />
       <Header
         isOnline={isOnline}
         installPrompt={installPrompt}

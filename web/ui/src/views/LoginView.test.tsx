@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LoginView from './LoginView';
 
@@ -26,11 +26,25 @@ vi.mock('react-i18next', () => ({
         'auth.errors.invalidEmail': 'Por favor, ingresa un correo electrónico válido.',
         'auth.errors.passwordTooShort': 'La contraseña debe tener al menos 8 caracteres.',
         'auth.errors.emailRequired': 'El correo electrónico es requerido.',
-        'auth.errors.passwordRequired': 'La contraseña es requerida.'
+        'auth.errors.passwordRequired': 'La contraseña es requerida.',
+        'auth.login.error.oauthRequired': 'Este correo está asociado a una cuenta de Google. Inicia sesión con Google.',
+        'auth.signup.error.oauthExists': 'Ya existe una cuenta con este correo a través de Google. Inicia sesión con Google o recupera tu contraseña.'
       };
       return keys[str] || str;
     },
     i18n: { changeLanguage: () => Promise.resolve() }
+  })
+}));
+
+// Mock useUserApi
+vi.mock('../hooks/useUserApi', () => ({
+  useUserApi: () => ({
+    preRegister: vi.fn().mockImplementation((data) => {
+      if (data.email === 'api-oauth-exists@example.com') {
+        return Promise.reject(new Error('oauth_provider_exists'));
+      }
+      return Promise.resolve();
+    })
   })
 }));
 
@@ -173,5 +187,78 @@ describe('LoginView Component', () => {
     await user.click(forgotBtn);
 
     expect(handleForgotPasswordClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('displays OAuth required banner on login collision error and allows setting password', async () => {
+    const user = userEvent.setup();
+    const handleForgotPasswordClick = vi.fn();
+    render(<LoginView onForgotPasswordClick={handleForgotPasswordClick} />);
+
+    const emailInput = screen.getByLabelText(/correo electrónico/i);
+    const passwordInput = screen.getByLabelText(/^contraseña$/i);
+    const submitBtn = screen.getByRole('button', { name: /ingresar/i });
+
+    await user.type(emailInput, 'oauth-required@example.com');
+    await user.type(passwordInput, 'validpassword123');
+    await user.click(submitBtn);
+
+    const alertBanner = await screen.findByRole('alert');
+    expect(alertBanner).toBeInTheDocument();
+    expect(screen.getByText(/este correo está asociado a una cuenta de google/i)).toBeInTheDocument();
+
+    const forgotBtnInAlert = within(alertBanner).getByRole('button', { name: /¿olvidaste tu contraseña\?/i });
+    await user.click(forgotBtnInAlert);
+    expect(handleForgotPasswordClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('displays OAuth exists banner on signup collision error and allows switching tabs', async () => {
+    const user = userEvent.setup();
+    const handleForgotPasswordClick = vi.fn();
+    render(<LoginView onForgotPasswordClick={handleForgotPasswordClick} />);
+
+    // Switch to Sign Up tab
+    const signupTab = screen.getByRole('tab', { name: /registrarse/i });
+    await user.click(signupTab);
+
+    const emailInput = screen.getByLabelText(/correo electrónico/i);
+    const passwordInput = screen.getByLabelText(/^contraseña$/i);
+    const submitBtn = screen.getByRole('button', { name: /crear cuenta/i });
+
+    await user.type(emailInput, 'oauth-exists@example.com');
+    await user.type(passwordInput, 'validpassword123');
+    await user.click(submitBtn);
+
+    const alertBanner = await screen.findByRole('alert');
+    expect(alertBanner).toBeInTheDocument();
+    expect(screen.getByText(/ya existe una cuenta con este correo a través de google/i)).toBeInTheDocument();
+
+    // Click on Iniciar Sesión button in the banner to switch tabs
+    const loginBtnInAlert = screen.getByRole('button', { name: /iniciar sesión/i });
+    await user.click(loginBtnInAlert);
+
+    // Verify it switched back to login
+    expect(screen.getByRole('button', { name: /ingresar/i })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('handles real API call with oauth_provider_exists error code', async () => {
+    const user = userEvent.setup();
+    render(<LoginView />);
+
+    // Switch to Sign Up tab
+    const signupTab = screen.getByRole('tab', { name: /registrarse/i });
+    await user.click(signupTab);
+
+    const emailInput = screen.getByLabelText(/correo electrónico/i);
+    const passwordInput = screen.getByLabelText(/^contraseña$/i);
+    const submitBtn = screen.getByRole('button', { name: /crear cuenta/i });
+
+    await user.type(emailInput, 'api-oauth-exists@example.com');
+    await user.type(passwordInput, 'validpassword123');
+    await user.click(submitBtn);
+
+    const alertBanner = await screen.findByRole('alert');
+    expect(alertBanner).toBeInTheDocument();
+    expect(screen.getByText(/ya existe una cuenta con este correo a través de google/i)).toBeInTheDocument();
   });
 });

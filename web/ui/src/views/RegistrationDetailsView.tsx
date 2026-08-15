@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, User, MapPin, Phone, AlertCircle } from 'lucide-react';
+import { useUserApi } from '../hooks/useUserApi';
 
 export interface RegistrationDetailsProps {
   onRegistrationComplete?: () => void;
@@ -14,6 +15,7 @@ export default function RegistrationDetailsView({
 }: RegistrationDetailsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { editDetails } = useUserApi();
 
   const [fullName, setFullName] = useState('');
   const [location, setLocation] = useState('');
@@ -21,6 +23,16 @@ export default function RegistrationDetailsView({
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ fullName?: string; location?: string; api?: string }>({});
+
+  useEffect(() => {
+    const status = localStorage.getItem('user_status');
+    const token = localStorage.getItem('paseto_token') || localStorage.getItem('token') || '';
+    if (!token) {
+      navigate('/login', { replace: true });
+    } else if (status === 'VERIFIED_COMPLETE') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,29 +54,24 @@ export default function RegistrationDetailsView({
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '.';
 
-      const response = await fetch('/api/v1/auth/register-details', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ fullName, location, phone }),
+      await editDetails({
+        firstName,
+        lastName,
+        mobilePhone: phone,
+        socials: location ? [location] : [],
       });
 
-      if (!response.ok) {
-        throw new Error(t('auth.registerDetails.errors.generic'));
-      }
+      localStorage.setItem('user_status', 'VERIFIED_COMPLETE');
 
       setIsLoading(false);
       if (onRegistrationComplete) {
         onRegistrationComplete();
       }
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setIsLoading(false);
       setErrors({

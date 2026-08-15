@@ -81,9 +81,16 @@ export const useUserApi = () => {
   };
 
   const editDetails = async (data: UserDTO) => {
+    const payload: Record<string, any> = {};
+    if (data.firstName !== undefined) payload.first_name = data.firstName;
+    if (data.lastName !== undefined) payload.last_name = data.lastName;
+    if (data.mobilePhone !== undefined) payload.mobile_phone = data.mobilePhone;
+    if (data.socials !== undefined) {
+      payload.socials = data.socials.join(', ');
+    }
     return request('/user/edit-details', {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   };
 

@@ -92,7 +92,7 @@ describe('useUserApi', () => {
 
     expect(mockFetch).toHaveBeenCalledWith('/user/edit-details', expect.objectContaining({
       method: 'PUT',
-      body: JSON.stringify({ firstName: 'John', lastName: 'Doe' }),
+      body: JSON.stringify({ first_name: 'John', last_name: 'Doe' }),
     }));
     
     const callArgs = mockFetch.mock.calls[0][1];

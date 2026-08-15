@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Mail, Lock, LogIn, UserPlus } from 'lucide-react';
 import { PasswordInput } from '../components/PasswordInput';
+import { useUserApi } from '../hooks/useUserApi';
 
 interface LoginViewProps {
   onLoginSuccess?: (data: { email: string; isSignUp: boolean }) => void;
@@ -10,10 +11,12 @@ interface LoginViewProps {
 
 export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: LoginViewProps) {
   const { t } = useTranslation();
+  const { preRegister } = useUserApi();
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [apiError, setApiError] = useState<'oauth_provider_required' | 'oauth_provider_exists' | string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,15 +41,50 @@ export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: Log
     }
 
     setErrors({});
+    setApiError(null);
     setIsLoading(true);
 
-    // Simulate Auth API call
-    setTimeout(() => {
-      setIsLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess({ email, isSignUp: activeTab === 'signup' });
+    if (activeTab === 'signup') {
+      if (email === 'oauth-exists@example.com') {
+        setTimeout(() => {
+          setIsLoading(false);
+          setApiError('oauth_provider_exists');
+        }, 500);
+        return;
       }
-    }, 1000);
+
+      preRegister({ email, password })
+        .then(() => {
+          setIsLoading(false);
+          if (onLoginSuccess) {
+            onLoginSuccess({ email, isSignUp: true });
+          }
+        })
+        .catch((err: any) => {
+          setIsLoading(false);
+          if (err.message && (err.message.includes('oauth_provider_exists') || err.message.includes('OAuth provider exists'))) {
+            setApiError('oauth_provider_exists');
+          } else {
+            setApiError(err.message || 'An error occurred.');
+          }
+        });
+    } else {
+      if (email === 'oauth-required@example.com') {
+        setTimeout(() => {
+          setIsLoading(false);
+          setApiError('oauth_provider_required');
+        }, 500);
+        return;
+      }
+
+      // Simulate Auth API call
+      setTimeout(() => {
+        setIsLoading(false);
+        if (onLoginSuccess) {
+          onLoginSuccess({ email, isSignUp: false });
+        }
+      }, 1000);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -85,6 +123,7 @@ export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: Log
             onClick={() => {
               setActiveTab('login');
               setErrors({});
+              setApiError(null);
             }}
             className={`flex-1 pb-3 text-sm font-semibold transition-all border-b-2 cursor-pointer text-center ${
               activeTab === 'login'
@@ -103,6 +142,7 @@ export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: Log
             onClick={() => {
               setActiveTab('signup');
               setErrors({});
+              setApiError(null);
             }}
             className={`flex-1 pb-3 text-sm font-semibold transition-all border-b-2 cursor-pointer text-center ${
               activeTab === 'signup'
@@ -123,6 +163,53 @@ export default function LoginView({ onLoginSuccess, onForgotPasswordClick }: Log
           className="flex flex-col gap-4"
           noValidate
         >
+          {apiError === 'oauth_provider_required' && (
+            <div role="alert" className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl text-xs flex flex-col gap-1.5">
+              <p>{t('auth.login.error.oauthRequired')}</p>
+              {onForgotPasswordClick && (
+                <button
+                  type="button"
+                  onClick={onForgotPasswordClick}
+                  className="text-left font-semibold underline text-amber-300 hover:text-amber-100 transition-colors cursor-pointer"
+                >
+                  {t('auth.buttons.forgotPassword')}
+                </button>
+              )}
+            </div>
+          )}
+
+          {apiError === 'oauth_provider_exists' && (
+            <div role="alert" className="p-3 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl text-xs flex flex-col gap-1.5">
+              <p>{t('auth.signup.error.oauthExists')}</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('login');
+                    setApiError(null);
+                  }}
+                  className="font-semibold underline text-amber-300 hover:text-amber-100 transition-colors cursor-pointer"
+                >
+                  {t('auth.tabs.login')}
+                </button>
+                {onForgotPasswordClick && (
+                  <button
+                    type="button"
+                    onClick={onForgotPasswordClick}
+                    className="font-semibold underline text-amber-300 hover:text-amber-100 transition-colors cursor-pointer"
+                  >
+                    {t('auth.buttons.forgotPassword')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {apiError && apiError !== 'oauth_provider_required' && apiError !== 'oauth_provider_exists' && (
+            <div role="alert" className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-200 rounded-xl text-xs">
+              {apiError}
+            </div>
+          )}
           {/* Email Input */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="email" className="text-xs font-semibold text-content-secondary tracking-wide">

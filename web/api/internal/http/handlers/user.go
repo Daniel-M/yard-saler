@@ -5,7 +5,9 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/Daniel-M/ys-api/internal/auth"
 	"github.com/Daniel-M/ys-api/internal/domain"
 	"github.com/Daniel-M/ys-api/internal/dto"
 	"github.com/Daniel-M/ys-api/internal/middleware"
@@ -14,12 +16,16 @@ import (
 
 // UserHandler handles user-related HTTP requests.
 type UserHandler struct {
-	service *user.UserService
+	service     *user.UserService
+	tokenIssuer auth.AccessTokenIssuer
 }
 
 // NewUserHandler instantiates a new UserHandler.
-func NewUserHandler(svc *user.UserService) *UserHandler {
-	return &UserHandler{service: svc}
+func NewUserHandler(svc *user.UserService, issuer auth.AccessTokenIssuer) *UserHandler {
+	return &UserHandler{
+		service:     svc,
+		tokenIssuer: issuer,
+	}
 }
 
 // PreRegister handles POST /user/pre-register
@@ -37,12 +43,16 @@ func (h *UserHandler) PreRegister(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.service.PreRegisterUser(r.Context(), input)
 	if err != nil {
+		if errors.Is(err, user.ErrOAuthProviderExists) {
+			http.Error(w, "oauth_provider_exists", http.StatusConflict)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(created.ToDTO())
 }
 
@@ -59,7 +69,7 @@ func (h *UserHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.VerifyUser(r.Context(), input)
+	u, err := h.service.VerifyUser(r.Context(), input)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			http.Error(w, err.Error(), http.StatusNotFound)
@@ -77,7 +87,26 @@ func (h *UserHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate access token (e.g. 24 hours expiry)
+	token, err := h.tokenIssuer.MintAccessToken(u.ID, u.Role, 24*time.Hour)
+	if err != nil {
+		http.Error(w, "failed to generate access token", http.StatusInternalServerError)
+		return
+	}
+
+	response := dto.UserVerifyResponseDTO{
+		Token: token,
+		User: dto.UserVerifyResponseUser{
+			ID:              u.ID,
+			Email:           u.Email,
+			IsVerified:      u.VerifiedAt != nil,
+			ProfileComplete: u.FirstName != "" && u.LastName != "",
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 // EditDetails handles PUT /user/edit-details
@@ -258,4 +287,94 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		"offset": offset,
 		"limit":  limit,
 	})
+}
+
+// Login handles POST /user/login
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var input dto.UserLoginDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := input.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	u, err := h.service.LoginUser(r.Context(), input.Email, input.Password)
+	if err != nil {
+		if errors.Is(err, user.ErrOAuthProviderRequired) {
+			http.Error(w, "oauth_provider_required", http.StatusForbidden)
+			return
+		}
+		if errors.Is(err, user.ErrInvalidCredentials) {
+			http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Generate access token (24 hours expiry)
+	token, err := h.tokenIssuer.MintAccessToken(u.ID, u.Role, 24*time.Hour)
+	if err != nil {
+		http.Error(w, "failed to generate access token", http.StatusInternalServerError)
+		return
+	}
+
+	response := dto.UserVerifyResponseDTO{
+		Token: token,
+		User: dto.UserVerifyResponseUser{
+			ID:              u.ID,
+			Email:           u.Email,
+			IsVerified:      u.VerifiedAt != nil,
+			ProfileComplete: u.FirstName != "" && u.LastName != "",
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// OAuthGoogle handles POST /user/oauth/google
+func (h *UserHandler) OAuthGoogle(w http.ResponseWriter, r *http.Request) {
+	var input dto.OAuthGoogleDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := input.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	u, err := h.service.OAuthGoogle(r.Context(), input.Credential)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Generate access token (24 hours expiry)
+	token, err := h.tokenIssuer.MintAccessToken(u.ID, u.Role, 24*time.Hour)
+	if err != nil {
+		http.Error(w, "failed to generate access token", http.StatusInternalServerError)
+		return
+	}
+
+	response := dto.UserVerifyResponseDTO{
+		Token: token,
+		User: dto.UserVerifyResponseUser{
+			ID:              u.ID,
+			Email:           u.Email,
+			IsVerified:      u.VerifiedAt != nil,
+			ProfileComplete: u.FirstName != "" && u.LastName != "",
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }

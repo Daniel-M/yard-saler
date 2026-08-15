@@ -121,13 +121,19 @@ func (r *SqliteUserRepository) FindByPasswordResetCode(ctx context.Context, code
 
 // Create inserts a new User into the database.
 func (r *SqliteUserRepository) Create(ctx context.Context, u *domain.User) (*domain.User, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
 	query := `
 		INSERT INTO users (id, email, password_hash, first_name, last_name, role, mobile_phone, socials, 
 		                   verification_code, verified_at, password_reset_code, password_reset_expires_at, 
 		                   created_at, updated_at) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
-	_, err := r.db.ExecContext(
+	_, err = tx.ExecContext(
 		ctx, query,
 		u.ID, u.Email, u.PasswordHash, u.FirstName, u.LastName, u.Role, u.MobilePhone, u.Socials,
 		u.VerificationCode, u.VerifiedAt, u.PasswordResetCode, u.PasswordResetExpiresAt,
@@ -136,18 +142,43 @@ func (r *SqliteUserRepository) Create(ctx context.Context, u *domain.User) (*dom
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user into sqlite: %w", err)
 	}
+
+	if u.PasswordHash != "" {
+		identityQuery := `
+			INSERT INTO user_identities (id, user_id, provider, provider_uid, password_hash, created_at)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`
+		identityID := "ident_local_" + u.ID
+		_, err = tx.ExecContext(
+			ctx, identityQuery,
+			identityID, u.ID, "local", u.Email, u.PasswordHash, u.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert local identity: %w", err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
 	return u, nil
 }
 
 // Update changes properties of an existing User.
 func (r *SqliteUserRepository) Update(ctx context.Context, u *domain.User) (*domain.User, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
 	query := `
 		UPDATE users 
 		SET email = ?, password_hash = ?, first_name = ?, last_name = ?, role = ?, mobile_phone = ?, socials = ?, 
 		    verification_code = ?, verified_at = ?, password_reset_code = ?, password_reset_expires_at = ?, updated_at = ? 
 		WHERE id = ?
 	`
-	_, err := r.db.ExecContext(
+	_, err = tx.ExecContext(
 		ctx, query,
 		u.Email, u.PasswordHash, u.FirstName, u.LastName, u.Role, u.MobilePhone, u.Socials,
 		u.VerificationCode, u.VerifiedAt, u.PasswordResetCode, u.PasswordResetExpiresAt, u.UpdatedAt,
@@ -155,6 +186,32 @@ func (r *SqliteUserRepository) Update(ctx context.Context, u *domain.User) (*dom
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user in sqlite: %w", err)
+	}
+
+	if u.PasswordHash != "" {
+		// Update the local identity if it exists, or insert it.
+		updateQuery := `UPDATE user_identities SET provider_uid = ?, password_hash = ? WHERE user_id = ? AND provider = 'local'`
+		res, err := tx.ExecContext(ctx, updateQuery, u.Email, u.PasswordHash, u.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update local identity: %w", err)
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get rows affected: %w", err)
+		}
+		if rowsAffected == 0 {
+			// Insert if not exists
+			insertQuery := `INSERT INTO user_identities (id, user_id, provider, provider_uid, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+			identityID := "ident_local_" + u.ID
+			_, err = tx.ExecContext(ctx, insertQuery, identityID, u.ID, "local", u.Email, u.PasswordHash, u.CreatedAt)
+			if err != nil {
+				return nil, fmt.Errorf("failed to insert local identity: %w", err)
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	return u, nil
 }
@@ -205,4 +262,80 @@ func (r *SqliteUserRepository) List(ctx context.Context, offset, limit int) ([]*
 	}
 
 	return users, total, nil
+}
+
+// FindIdentity retrieves a single UserIdentity by provider and providerUID.
+func (r *SqliteUserRepository) FindIdentity(ctx context.Context, provider, providerUID string) (*domain.UserIdentity, error) {
+	query := `
+		SELECT id, user_id, provider, provider_uid, password_hash, created_at
+		FROM user_identities
+		WHERE provider = ? AND provider_uid = ?
+	`
+	row := r.db.QueryRowContext(ctx, query, provider, providerUID)
+	var ui domain.UserIdentity
+	var passwordHash sql.NullString
+	err := row.Scan(
+		&ui.ID, &ui.UserID, &ui.Provider, &ui.ProviderUID, &passwordHash, &ui.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to fetch identity from sqlite: %w", err)
+	}
+	if passwordHash.Valid {
+		ui.PasswordHash = passwordHash.String
+	}
+	return &ui, nil
+}
+
+// FindIdentitiesByUserID retrieves all UserIdentities associated with a user ID.
+func (r *SqliteUserRepository) FindIdentitiesByUserID(ctx context.Context, userID string) ([]*domain.UserIdentity, error) {
+	query := `
+		SELECT id, user_id, provider, provider_uid, password_hash, created_at
+		FROM user_identities
+		WHERE user_id = ?
+	`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user identities from sqlite: %w", err)
+	}
+	defer rows.Close()
+
+	var identities []*domain.UserIdentity
+	for rows.Next() {
+		var ui domain.UserIdentity
+		var passwordHash sql.NullString
+		err := rows.Scan(
+			&ui.ID, &ui.UserID, &ui.Provider, &ui.ProviderUID, &passwordHash, &ui.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan user identity from sqlite row: %w", err)
+		}
+		if passwordHash.Valid {
+			ui.PasswordHash = passwordHash.String
+		}
+		identities = append(identities, &ui)
+	}
+	return identities, nil
+}
+
+// CreateIdentity inserts a new UserIdentity into the database.
+func (r *SqliteUserRepository) CreateIdentity(ctx context.Context, ui *domain.UserIdentity) (*domain.UserIdentity, error) {
+	query := `
+		INSERT INTO user_identities (id, user_id, provider, provider_uid, password_hash, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+	var passwordHash sql.NullString
+	if ui.PasswordHash != "" {
+		passwordHash = sql.NullString{String: ui.PasswordHash, Valid: true}
+	}
+	_, err := r.db.ExecContext(
+		ctx, query,
+		ui.ID, ui.UserID, ui.Provider, ui.ProviderUID, passwordHash, ui.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert user identity into sqlite: %w", err)
+	}
+	return ui, nil
 }
