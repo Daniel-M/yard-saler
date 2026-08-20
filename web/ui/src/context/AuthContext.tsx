@@ -1,11 +1,22 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type { LoggedUserDTO } from "@type/auth.types";
+import React, {
+  type ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface AuthContextType {
   token: string | null;
   setToken: (token: string | null) => void;
+  user: LoggedUserDTO | null;
+  setUser: (user: LoggedUserDTO | null) => void;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -13,19 +24,21 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('paseto_token');
+    return localStorage.getItem("token");
   });
+  const [user, setUser] = useState<LoggedUserDTO | null>(null);
 
   useEffect(() => {
     if (token) {
-      localStorage.setItem('paseto_token', token);
+      localStorage.setItem("token", token);
     } else {
-      localStorage.removeItem('paseto_token');
+      localStorage.removeItem("token");
+      setUser(null);
     }
   }, [token]);
 
   return (
-    <AuthContext.Provider value={{ token, setToken }}>
+    <AuthContext.Provider value={{ token, setToken, user, setUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -34,7 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

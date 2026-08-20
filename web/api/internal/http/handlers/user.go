@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Daniel-M/ys-api/internal/auth"
@@ -28,7 +29,7 @@ func NewUserHandler(svc *user.UserService, issuer auth.AccessTokenIssuer) *UserH
 	}
 }
 
-// PreRegister handles POST /user/pre-register
+// PreRegister handles POST /user/details/register
 func (h *UserHandler) PreRegister(w http.ResponseWriter, r *http.Request) {
 	var input dto.UserPreRegisterDTO
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -327,13 +328,19 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := dto.UserVerifyResponseDTO{
-		Token: token,
-		User: dto.UserVerifyResponseUser{
+	response := dto.UserLoginResponseDTO{
+		Token:    token,
+		IsSignUp: u.VerifiedAt == nil,
+		User: dto.LoggedUserDTO{
 			ID:              u.ID,
 			Email:           u.Email,
+			FirstName:       u.FirstName,
+			LastName:        u.LastName,
+			Role:            u.Role,
+			MobilePhone:     u.MobilePhone,
 			IsVerified:      u.VerifiedAt != nil,
-			ProfileComplete: u.FirstName != "" && u.LastName != "",
+			ProfileComplete: u.FirstName != "" && u.LastName != "" && u.MobilePhone != "",
+			AccountAge:      time.Since(u.CreatedAt),
 		},
 	}
 
@@ -381,4 +388,61 @@ func (h *UserHandler) OAuthGoogle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+// GetProfile handles GET /user/me
+func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok || userID == "" {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	u, err := h.service.GetUser(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if u == nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	displayName := strings.TrimSpace(u.FirstName + " " + u.LastName)
+	if displayName == "" {
+		displayName = u.Email
+	}
+
+	var initials string
+	if u.FirstName != "" {
+		initials += string([]rune(u.FirstName)[0])
+	}
+	if u.LastName != "" {
+		initials += string([]rune(u.LastName)[0])
+	}
+	if initials == "" && u.Email != "" {
+		initials = strings.ToUpper(string([]rune(u.Email)[0]))
+	} else {
+		initials = strings.ToUpper(initials)
+	}
+
+	profile := dto.UserProfileDTO{
+		ID:          u.ID,
+		DisplayName: displayName,
+		Email:       u.Email,
+		Initials:    initials,
+		AvatarURL:   nil,
+		FirstName:   u.FirstName,
+		LastName:    u.LastName,
+		IsVerified:  u.VerifiedAt != nil,
+		CreatedAt:   u.CreatedAt,
+		UpdatedAt:   u.UpdatedAt,
+		VerifiedAt:  u.VerifiedAt,
+		MobilePhone: u.MobilePhone,
+		Socials:     u.Socials,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(profile)
 }

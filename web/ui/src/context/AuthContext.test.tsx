@@ -46,6 +46,53 @@ describe('AuthContext', () => {
     expect(localStorage.getItem('paseto_token')).toBeNull();
   });
 
+  it('initializes user to null and updates via setUser', () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+    });
+
+    expect(result.current.user).toBeNull();
+
+    const testUser = {
+      id: 'usr_123',
+      displayName: 'Jane Doe',
+      email: 'jane@example.com',
+      initials: 'JD',
+    };
+
+    act(() => {
+      result.current.setUser(testUser);
+    });
+
+    expect(result.current.user).toEqual(testUser);
+  });
+
+  it('resets user to null when token becomes null or empty', () => {
+    localStorage.setItem('paseto_token', 'existing-token');
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+    });
+
+    const testUser = {
+      id: 'usr_123',
+      displayName: 'Jane Doe',
+      email: 'jane@example.com',
+      initials: 'JD',
+    };
+
+    act(() => {
+      result.current.setUser(testUser);
+    });
+
+    expect(result.current.user).toEqual(testUser);
+
+    act(() => {
+      result.current.setToken(null);
+    });
+
+    expect(result.current.user).toBeNull();
+  });
+
   it('throws error if useAuth is used outside of AuthProvider', () => {
     // Suppress console.error for expected error thrown in render
     const consoleSpy = vi.spyOn(console, 'error');

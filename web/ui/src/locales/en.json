@@ -145,5 +145,24 @@
     "footer": {
       "rights": "© 2026 Project Whale Shark. All rights reserved."
     }
+  },
+  "dashboard": {
+    "nav": {
+      "home": "Dashboard",
+      "myListings": "My Listings",
+      "explore": "Explore",
+      "settings": "Settings",
+      "logout": "Log Out"
+    },
+    "offlineBanner": "You are currently offline. Listing updates may be delayed.",
+    "stubs": {
+      "settingsComingSoon": "Coming Soon: Settings & Configuration",
+      "profileComingSoon": "Coming Soon: Profile Management"
+    },
+    "drawer": {
+      "ariaLabel": "Navigation Menu",
+      "closeAriaLabel": "Close navigation menu",
+      "openAriaLabel": "Open navigation menu"
+    }
   }
 }

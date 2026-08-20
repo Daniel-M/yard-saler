@@ -39,6 +39,18 @@ type UserDTO struct {
 	UpdatedAt        time.Time  `json:"updated_at"`
 }
 
+type LoggedUserDTO struct {
+	ID              string        `json:"id"`
+	Email           string        `json:"email"`
+	FirstName       string        `json:"first_name"`
+	LastName        string        `json:"last_name"`
+	Role            string        `json:"role"`
+	MobilePhone     string        `json:"mobile_phone"`
+	IsVerified      bool          `json:"is_verified,omitempty"`
+	ProfileComplete bool          `json:"profile_complete,omitempty"`
+	AccountAge      time.Duration `json:"account_age"`
+}
+
 func (d UserDTO) Validate() error {
 	if d.FirstName == "" {
 		return errors.New("first name is required")
@@ -90,6 +102,12 @@ type UserVerifyResponseDTO struct {
 	User  UserVerifyResponseUser `json:"user"`
 }
 
+type UserLoginResponseDTO struct {
+	Token    string        `json:"token"`
+	User     LoggedUserDTO `json:"user"`
+	IsSignUp bool          `json:"is_sign_up"`
+}
+
 type UserLoginDTO struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -116,3 +134,18 @@ func (d OAuthGoogleDTO) Validate() error {
 	return nil
 }
 
+type UserProfileDTO struct {
+	ID          string     `json:"id"`
+	DisplayName string     `json:"display_name"`
+	Email       string     `json:"email"`
+	Initials    string     `json:"initials"`
+	AvatarURL   *string    `json:"avatar_url"`
+	FirstName   string     `json:"first_name"`
+	LastName    string     `json:"last_name"`
+	IsVerified  bool       `json:"is_verified"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	VerifiedAt  *time.Time `json:"verified_at"`
+	MobilePhone string     `json:"mobile_phone"`
+	Socials     string     `json:"socials"`
+}

@@ -1,42 +1,69 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
+import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-  },
+  // Use vite-tsconfig-paths to automatically resolve paths from tsconfig.json
   plugins: [
     react(),
     tailwindcss(),
+    tsconfigPaths(), // reads your tsconfig.json "compilerOptions.paths"
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       manifest: {
-        name: 'PWA Application',
-        short_name: 'PWAApp',
-        description: 'High-performance responsive PWA built with Vite and Tailwind',
-        theme_color: '#0f172a',
-        background_color: '#ffffff',
-        display: 'standalone',
+        name: "PWA Application",
+        short_name: "PWAApp",
+        description:
+          "High-performance responsive PWA built with Vite and Tailwind",
+        theme_color: "#0f172a",
+        background_color: "#ffffff",
+        display: "standalone",
         icons: [
+          { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
           {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "/pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
           },
-          {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      }
-    })
-  ]
-})
+        ],
+      },
+    }),
+  ],
+
+  // Optional: build optimizations
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+        },
+      },
+    },
+  },
+
+  test: {
+    globals: true, // enables global `describe`, `it`, etc.
+    // Projects array – each entry is a full test config
+    projects: [
+      {
+        // Browser (React) tests
+        environment: "jsdom",
+        setupFiles: "./src/setupTests.ts",
+        include: ["src/**/*.{test,spec}.{jsx,tsx}"],
+        exclude: ["**/*.{test,spec}.{js,ts}"], // exclude pure JS/TS files
+      },
+      {
+        // Node / unit tests (non-React)
+        environment: "node",
+        include: ["**/*.{test,spec}.{js,ts}"],
+        exclude: ["src/**/*.{test,spec}.{jsx,tsx}"], // exclude JSX/TSX
+        setupFiles: [], // no extra setup needed
+      },
+    ],
+  },
+});

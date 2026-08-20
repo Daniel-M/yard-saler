@@ -145,5 +145,24 @@
     "footer": {
       "rights": "© 2026 Project Whale Shark. Todos los derechos reservados."
     }
+  },
+  "dashboard": {
+    "nav": {
+      "home": "Tablero",
+      "myListings": "Mis Anuncios",
+      "explore": "Explorar",
+      "settings": "Configuración",
+      "logout": "Cerrar sesión"
+    },
+    "offlineBanner": "Actualmente estás desconectado. Las actualizaciones de los anuncios pueden retrasarse.",
+    "stubs": {
+      "settingsComingSoon": "Próximamente: Configuración y ajustes",
+      "profileComingSoon": "Próximamente: Administración del perfil"
+    },
+    "drawer": {
+      "ariaLabel": "Menú de navegación",
+      "closeAriaLabel": "Cerrar menú de navegación",
+      "openAriaLabel": "Abrir menú de navegación"
+    }
   }
 }

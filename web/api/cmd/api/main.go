@@ -74,15 +74,16 @@ func main() {
 	mux.HandleFunc("DELETE /users/{id}", userHandler.DeleteUser)
 
 	// New User workflows
-	mux.HandleFunc("POST /user/pre-register", userHandler.PreRegister)
-	mux.HandleFunc("POST /user/verify", userHandler.Verify)
-	mux.HandleFunc("POST /user/password-reset", userHandler.PasswordReset)
-	mux.HandleFunc("POST /user/login", userHandler.Login)
-	mux.HandleFunc("POST /user/oauth/google", userHandler.OAuthGoogle)
+	mux.HandleFunc("POST /user/auth/verify", userHandler.Verify)
+	mux.HandleFunc("POST /user/auth/password-reset", userHandler.PasswordReset)
+	mux.HandleFunc("POST /user/auth/login", userHandler.Login)
+	mux.HandleFunc("POST /user/auth/oauth/google", userHandler.OAuthGoogle)
+	mux.HandleFunc("POST /user/details/register", userHandler.PreRegister)
 
 	// PASETO protected route
 	authMiddleware := middleware.Auth(tokenIssuer)
-	mux.Handle("PUT /user/edit-details", authMiddleware(http.HandlerFunc(userHandler.EditDetails)))
+	mux.Handle("PUT /user/details", authMiddleware(http.HandlerFunc(userHandler.EditDetails)))
+	mux.Handle("GET /user/me", authMiddleware(http.HandlerFunc(userHandler.GetProfile)))
 
 	handler := middleware.Chain(mux, middleware.Logger, middleware.CORS(cfg.CORS.AllowedOrigins))
 

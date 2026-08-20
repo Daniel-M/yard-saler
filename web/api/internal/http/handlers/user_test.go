@@ -339,3 +339,103 @@ func TestUserHandler_PreRegisterAlreadyExists(t *testing.T) {
 	}
 }
 
+func TestUserHandler_GetProfile(t *testing.T) {
+	db, handler, tokenIssuer := setupTestApp(t)
+	defer db.Close()
+
+	// 1. Setup a verified user with name
+	repo := user.NewSqliteUserRepository(db)
+	ctx := context.Background()
+	u := &domain.User{
+		ID:        "usr_profile_1",
+		Email:     "profile@example.com",
+		FirstName: "Jane",
+		LastName:  "Doe",
+		Role:      "user",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	_, err := repo.Create(ctx, u)
+	if err != nil {
+		t.Fatalf("failed to setup user: %v", err)
+	}
+
+	// Mint token for user
+	token, err := tokenIssuer.MintAccessToken(u.ID, u.Role, 1*time.Hour)
+	if err != nil {
+		t.Fatalf("failed to mint token: %v", err)
+	}
+
+	// Create Auth middleware wrapped handler
+	authMiddleware := middleware.Auth(tokenIssuer)
+	wrappedHandler := authMiddleware(http.HandlerFunc(handler.GetProfile))
+
+	t.Run("Success", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/user/me", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200 OK, got %d. Body: %s", w.Code, w.Body.String())
+		}
+
+		var profile dto.UserProfileDTO
+		if err := json.Unmarshal(w.Body.Bytes(), &profile); err != nil {
+			t.Fatalf("failed to parse profile response: %v", err)
+		}
+
+		if profile.ID != u.ID {
+			t.Errorf("expected ID %q, got %q", u.ID, profile.ID)
+		}
+		if profile.DisplayName != "Jane Doe" {
+			t.Errorf("expected DisplayName %q, got %q", "Jane Doe", profile.DisplayName)
+		}
+		if profile.Email != u.Email {
+			t.Errorf("expected Email %q, got %q", u.Email, profile.Email)
+		}
+		if profile.Initials != "JD" {
+			t.Errorf("expected Initials %q, got %q", "JD", profile.Initials)
+		}
+		if profile.AvatarURL != nil {
+			t.Errorf("expected nil AvatarURL, got %v", profile.AvatarURL)
+		}
+		if profile.FirstName != u.FirstName {
+			t.Errorf("expected FirstName %q, got %q", u.FirstName, profile.FirstName)
+		}
+		if profile.LastName != u.LastName {
+			t.Errorf("expected LastName %q, got %q", u.LastName, profile.LastName)
+		}
+		if profile.IsVerified != false {
+			t.Errorf("expected IsVerified false, got %t", profile.IsVerified)
+		}
+		if profile.CreatedAt.IsZero() {
+			t.Errorf("expected non-zero CreatedAt")
+		}
+		if profile.UpdatedAt.IsZero() {
+			t.Errorf("expected non-zero UpdatedAt")
+		}
+		if profile.VerifiedAt != nil {
+			t.Errorf("expected nil VerifiedAt, got %v", profile.VerifiedAt)
+		}
+		if profile.MobilePhone != "" {
+			t.Errorf("expected empty MobilePhone, got %q", profile.MobilePhone)
+		}
+		if profile.Socials != "" {
+			t.Errorf("expected empty Socials, got %q", profile.Socials)
+		}
+	})
+
+	t.Run("Unauthorized - No Token", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/user/me", nil)
+		w := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("expected status 401 Unauthorized, got %d", w.Code)
+		}
+	})
+}
+

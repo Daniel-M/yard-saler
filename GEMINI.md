@@ -32,4 +32,36 @@ Project Whale Shark is a responsive, installable Yard-Sale (PWA) application des
 3.  **Dependencies Constraint:** Do not install external npm packages unless explicitly requested by the user.
 4.  **Grill-Me Protocol:** Before writing specifications or implementing features, conduct a grill-me interview to clarify requirements and design decisions one-by-one, providing recommended options.
 5.  **API Contracts & DTOs:** All API Contracts and JSON DTOs must use snake_case (e.g., `verification_code`) even if internal models/variables are not.
+6.  **Auth Context & Token Guardrails:** When designing authorization routes or route guards, ensure that any failure to authenticate immediately clears the authentication context (e.g. calling `setToken(null)`) before executing redirect navigations to prevent invalid auth states. Silent user profile fallbacks to mock data are strictly prohibited in production, and must be gated by environment checks (e.g., `import.meta.env.DEV` or similar environment checks).
+7.  **TypeScript Type Import Guardrail:** Always use type-only imports (e.g., `import type { UserProfile }`) when importing TypeScript interfaces or types to prevent runtime esbuild/bundler export mismatch errors.
+8.  **Side Drawer State Guardrail:** Always manage the application's side drawer state via the global `DrawerProvider` context and the `useDrawer` custom hook. Local/ad-hoc state management for opening, closing, or checking the state of the main navigation drawer is strictly prohibited.
+
+---
+
+## Frontend Architectural Guidelines & Guardrails
+
+### 1. API & Network Invariants (STRICT)
+- Zero Raw Network Requests: Never use `fetch()`, `axios`, `XMLHttpRequest`, or raw HTTP requests in React components or pages.
+- Centralized API Client Exclusivity: Every network call MUST route through the centralized API client (`@/lib/api/client` or project equivalent). Do not manually assemble base URLs, request headers, or auth tokens in components.
+- Strict Type Contracts: All endpoints, query parameters, request bodies, and responses must use explicit TypeScript interfaces (no `any`).
+
+### 2. State & Hook Encapsulation
+- Mandatory Custom Hooks: All data retrieval and mutations must be encapsulated within custom React hooks (e.g., `useUserData`, `useUpdateProject`).
+- State Architecture: Use standard React primitives (`useState`, `useEffect`, `useCallback`, `useReducer`).
+- Return Signature Standards:
+  - Query Hooks: `{ data: T | null, isLoading: boolean, error: Error | null, refetch: () => Promise<void> }`
+  - Mutation Hooks: `{ mutate: (variables: V) => Promise<T>, isLoading: boolean, error: Error | null, isSuccess: boolean, reset: () => void }`
+- Component Safety: Hooks must handle component unmounting and race conditions via `AbortController`.
+
+### 3. Componentization & Colocation Standards
+- UI components must only handle presentation and user interactions.
+- Feature file layout:
+  ```text
+  features/[feature-name]/
+  ├── api/              # Endpoint definitions using the shared API client
+  ├── hooks/            # Feature-specific custom React hooks
+  ├── components/       # Presentational & container components
+  └── types/            # DTOs, request/response models, hook return types
+  ```
+
 

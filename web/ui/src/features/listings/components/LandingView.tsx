@@ -77,9 +77,9 @@ const ListingCard: React.FC<{ listing: Listing }> = ({ listing }) => {
   };
 
   return (
-    <article className="group bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-all duration-300 flex flex-col h-full shadow-lg">
+    <article className="group bg-[var(--surface)]/40 border border-[var(--border-subtle)] rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-all duration-300 flex flex-col h-full shadow-lg">
       {/* Image Carousel */}
-      <div className="relative aspect-video w-full bg-slate-950 overflow-hidden group-hover:shadow-indigo-500/10">
+      <div className="relative aspect-video w-full bg-[var(--canvas)] overflow-hidden group-hover:shadow-indigo-500/10">
         <img
           src={listing.images[currentImgIndex]}
           alt={`${listing.title} - ${currentImgIndex + 1}`}
@@ -87,7 +87,7 @@ const ListingCard: React.FC<{ listing: Listing }> = ({ listing }) => {
         />
         
         {/* Carousel Overlay Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--canvas)]/60 via-transparent to-transparent pointer-events-none" />
 
         {/* Carousel controls */}
         {listing.images.length > 1 && (
@@ -95,14 +95,14 @@ const ListingCard: React.FC<{ listing: Listing }> = ({ listing }) => {
             <button
               onClick={handlePrev}
               aria-label={t('landing.carousel.prev')}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-slate-950/70 hover:bg-slate-900 border border-slate-800 text-white rounded-full p-1.5 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-[var(--canvas)]/70 hover:bg-[var(--surface)] border border-[var(--border-subtle)] text-white rounded-full p-1.5 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={handleNext}
               aria-label={t('landing.carousel.next')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-950/70 hover:bg-slate-900 border border-slate-800 text-white rounded-full p-1.5 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-[var(--canvas)]/70 hover:bg-[var(--surface)] border border-[var(--border-subtle)] text-white rounded-full p-1.5 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -110,7 +110,7 @@ const ListingCard: React.FC<{ listing: Listing }> = ({ listing }) => {
         )}
 
         {/* Image count badge */}
-        <span className="absolute bottom-2 right-2 bg-slate-950/80 border border-slate-800 px-2 py-0.5 rounded-md text-[10px] text-slate-300 font-medium">
+        <span className="absolute bottom-2 right-2 bg-[var(--canvas)]/80 border border-[var(--border-subtle)] px-2 py-0.5 rounded-md text-[10px] text-[var(--content-primary)] font-medium">
           {t('landing.carousel.imageCounter', { current: currentImgIndex + 1, total: listing.images.length })}
         </span>
       </div>
@@ -121,13 +121,13 @@ const ListingCard: React.FC<{ listing: Listing }> = ({ listing }) => {
           <h4 className="text-lg font-bold text-white tracking-tight group-hover:text-indigo-400 transition-colors">
             {listing.title}
           </h4>
-          <p className="mt-2 text-xs leading-relaxed text-slate-400 line-clamp-3">
+          <p className="mt-2 text-xs leading-relaxed text-[var(--content-secondary)] line-clamp-3">
             {listing.description}
           </p>
         </div>
 
         {/* Event Fields & Meta */}
-        <div className="mt-5 pt-4 border-t border-slate-800/80 space-y-2 text-xs text-slate-400">
+        <div className="mt-5 pt-4 border-t border-[var(--border-subtle)]/80 space-y-2 text-xs text-[var(--content-secondary)]">
           <div className="flex items-start gap-2">
             <User className="h-3.5 w-3.5 text-indigo-400 shrink-0 mt-0.5" />
             <span>{t('landing.eventDetails.host', { host: listing.host })}</span>
@@ -178,13 +178,13 @@ const LandingView: React.FC = () => {
         <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none">
           {t('landing.title')}
         </h2>
-        <p className="mt-3 text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed">
+        <p className="mt-3 text-sm sm:text-base text-[var(--content-secondary)] max-w-2xl leading-relaxed">
           {t('landing.subtitle')}
         </p>
       </section>
 
       {/* Filter / Search Dashboard Widget */}
-      <section className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm">
+      <section className="bg-[var(--surface)]/30 border border-[var(--border-subtle)] rounded-2xl p-5 shadow-xl backdrop-blur-sm">
         <div className="grid gap-4 md:grid-cols-3 items-end">
           {/* Location Search Input */}
           <div className="relative">
@@ -192,19 +192,19 @@ const LandingView: React.FC = () => {
               {t('landing.search.placeholder')}
             </label>
             <div className="relative flex items-center">
-              <Search className="absolute left-3 h-4 w-4 text-slate-500" />
+              <Search className="absolute left-3 h-4 w-4 text-[var(--content-muted)]" />
               <input
                 id="location-search"
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={t('landing.search.placeholder')}
-                className="w-full bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-[var(--canvas)] border border-[var(--border-subtle)] text-[var(--content-primary)] placeholder-[var(--content-secondary)] pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3 text-[var(--content-muted)] hover:text-[var(--content-primary)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -214,19 +214,19 @@ const LandingView: React.FC = () => {
 
           {/* Host Filter Input */}
           <div className="relative flex items-center">
-            <User className="absolute left-3 h-4 w-4 text-slate-500" />
+            <User className="absolute left-3 h-4 w-4 text-[var(--content-muted)]" />
             <input
               id="host-filter"
               type="text"
               value={hostFilter}
               onChange={(e) => setHostFilter(e.target.value)}
               placeholder={t('landing.search.filterHost')}
-              className="w-full bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-[var(--canvas)] border border-[var(--border-subtle)] text-[var(--content-primary)] placeholder-[var(--content-secondary)] pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
             />
             {hostFilter && (
               <button
                 onClick={() => setHostFilter('')}
-                className="absolute right-3 text-slate-500 hover:text-slate-300"
+                className="absolute right-3 text-[var(--content-muted)] hover:text-[var(--content-primary)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -238,7 +238,7 @@ const LandingView: React.FC = () => {
             {(searchTerm || hostFilter) && (
               <button
                 onClick={clearFilters}
-                className="w-full px-4 py-2.5 bg-slate-800 hover:bg-slate-750 active:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-sm transition-all cursor-pointer font-medium"
+                className="w-full px-4 py-2.5 bg-[var(--surface-elevated)] hover:bg-[var(--surface-elevated)] active:bg-[var(--surface-elevated)] text-[var(--content-secondary)] border border-[var(--border-subtle)] rounded-xl text-sm transition-all cursor-pointer font-medium"
               >
                 {t('landing.search.clear')}
               </button>
@@ -256,8 +256,8 @@ const LandingView: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-slate-900/10 border border-dashed border-slate-800 rounded-2xl">
-            <p className="text-sm text-slate-500">{t('landing.search.noResults')}</p>
+          <div className="text-center py-12 bg-[var(--surface)]/10 border border-dashed border-[var(--border-subtle)] rounded-2xl">
+            <p className="text-sm text-[var(--content-muted)]">{t('landing.search.noResults')}</p>
           </div>
         )}
       </section>
