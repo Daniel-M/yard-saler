@@ -132,9 +132,20 @@ describe('VerifyView Component', () => {
   it('handles manual code auto-submission successfully and redirects', async () => {
     mockSearchParams = new URLSearchParams('');
     const user = userEvent.setup();
-    mockVerify.mockResolvedValueOnce({ status: 'success', token: 'MOCK_TOKEN' });
+    const mockUser = { id: '1', email: 'test@example.com', first_name: 'Test', last_name: 'User', mobile_phone: '1234567890', is_verified: true, profile_complete: false, account_age: 1 };
+    mockVerify.mockResolvedValueOnce({ status: 'success', token: 'MOCK_TOKEN', user: mockUser });
 
-    render(<VerifyView />);
+    const onVerificationSuccess = vi.fn((token, user) => {
+      setTimeout(() => {
+        if (user.profile_complete) {
+          mockNavigate('/user/dashboard', { replace: true });
+        } else {
+          mockNavigate('/user/register', { replace: true });
+        }
+      }, 1500);
+    });
+
+    render(<VerifyView onVerificationSuccess={onVerificationSuccess} />);
 
     const input = screen.getByLabelText('Enter 6-Digit Code');
     await user.type(input, '123456');
@@ -147,6 +158,7 @@ describe('VerifyView Component', () => {
     expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'VERIFIED_PENDING_DETAILS');
     expect(localStorage.setItem).toHaveBeenCalledWith('token', 'MOCK_TOKEN');
     expect(mockSetToken).toHaveBeenCalledWith('MOCK_TOKEN');
+    expect(onVerificationSuccess).toHaveBeenCalledWith('MOCK_TOKEN', mockUser);
 
     // Callback simulation for redirect
     expect(window.setTimeout).toHaveBeenCalledWith(expect.any(Function), 1500);

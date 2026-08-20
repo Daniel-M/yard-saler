@@ -1,14 +1,15 @@
 import { useAuth } from "@context/AuthContext";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
+import type { LoggedUserDTO } from "@type/auth.types";
 
 import { useVerifyCode } from "./useVerifyCode";
 
 export type VerificationStatus = "idle" | "loading" | "success" | "error";
 
 export interface UseCodeVerificationOptions {
-  onVerificationSuccess?: (token: string) => void;
+  onVerificationSuccess?: (token: string, user: LoggedUserDTO) => void;
   onVerificationError?: (error: string) => void;
 }
 
@@ -17,7 +18,6 @@ export const useCodeVerification = ({
   onVerificationError,
 }: UseCodeVerificationOptions = {}) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const location = useLocation();
   const { mutate: verify } = useVerifyCode();
   const { setToken, setUser } = useAuth();
@@ -60,17 +60,7 @@ export const useCodeVerification = ({
           }
         }
 
-        onVerificationSuccess?.(receivedToken);
-
-        const timer = setTimeout(() => {
-          if (data.user?.profile_complete) {
-            navigate("/user/dashboard", { replace: true });
-          } else {
-            navigate("/user/register", { replace: true });
-          }
-        }, 1500);
-
-        return () => clearTimeout(timer);
+        onVerificationSuccess?.(receivedToken, data.user);
       } catch (err: unknown) {
         const msg =
           err instanceof Error
@@ -88,7 +78,6 @@ export const useCodeVerification = ({
       setUser,
       onVerificationSuccess,
       onVerificationError,
-      navigate,
       t,
     ],
   );

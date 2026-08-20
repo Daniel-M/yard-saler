@@ -1,5 +1,6 @@
 import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import { useForgotPassword } from "../hooks/useForgotPassword";
@@ -9,13 +10,15 @@ export interface ForgotPasswordViewProps {
   onRecoveryInitiated?: (email: string) => void;
 }
 
+interface ForgotPasswordFormData {
+  email: string;
+}
+
 export default function ForgotPasswordView({
   onBackToLogin,
   onRecoveryInitiated,
 }: ForgotPasswordViewProps) {
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
 
   const {
     mutate: forgotPasswordMutate,
@@ -24,26 +27,20 @@ export default function ForgotPasswordView({
     isSuccess,
   } = useForgotPassword();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setValidationError(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormData>({
+    defaultValues: { email: "" },
+    mode: "onTouched",
+  });
 
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setValidationError(t("recovery.errors.emailRequired"));
-      return;
-    }
-
-    const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setValidationError(t("recovery.errors.invalidEmail"));
-      return;
-    }
-
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      await forgotPasswordMutate(trimmedEmail);
+      await forgotPasswordMutate(data.email.trim());
       if (onRecoveryInitiated) {
-        onRecoveryInitiated(trimmedEmail);
+        onRecoveryInitiated(data.email.trim());
       }
     } catch {
       // Error is handled by the hook
@@ -51,7 +48,7 @@ export default function ForgotPasswordView({
   };
 
   const displayedError =
-    validationError || (apiError ? t("recovery.errors.invalidEmail") : null);
+    errors.email?.message || (apiError ? apiError.message : null);
 
   return (
     <main className="flex-1 w-full text-content-primary flex items-center justify-center p-4 sm:p-6 md:p-8 font-sans transition-colors duration-150">
@@ -98,7 +95,7 @@ export default function ForgotPasswordView({
 
             {/* Form */}
             <form
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onSubmit)}
               className="flex flex-col gap-4"
               noValidate
             >
@@ -117,8 +114,13 @@ export default function ForgotPasswordView({
                   <input
                     id="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    {...register("email", {
+                      required: t("recovery.errors.emailRequired"),
+                      pattern: {
+                        value: /\S+@\S+\.\S+/,
+                        message: t("recovery.errors.invalidEmail"),
+                      },
+                    })}
                     placeholder={t("recovery.fields.emailPlaceholder")}
                     className={`w-full pl-10 pr-4 py-2.5 bg-surface-elevated border rounded-xl text-sm text-content-primary placeholder-content-muted focus:outline-none focus:ring-2 transition-all duration-150 ${
                       displayedError
@@ -130,7 +132,6 @@ export default function ForgotPasswordView({
                       displayedError ? "email-error" : undefined
                     }
                     disabled={isLoading}
-                    required
                   />
                 </div>
                 {displayedError && (

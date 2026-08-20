@@ -1,12 +1,12 @@
 import { LanguageToggle } from "@components/LanguageToggle";
 import { ThemeToggle } from "@components/ThemeToggle";
 import { type UserProfile, useAuth } from "@context/AuthContext";
-import { Download, Layers, LogOut, Menu, Wifi, WifiOff, X } from "lucide-react";
+import { Download, Layers, LogOut, Menu, X } from "lucide-react";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConnectionStatus } from "@components/layout/ConnectionStatus";
 
 export interface HeaderProps {
-  isOnline?: boolean;
   installPrompt?: any;
   onInstall?: () => void;
   activeTab?: string;
@@ -16,10 +16,10 @@ export interface HeaderProps {
   onHamburgerClick?: () => void;
   showHamburger?: boolean;
   hideNavLinks?: boolean;
+  hideThemeLanguageToggles?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  isOnline = true,
   installPrompt = null,
   onInstall,
   activeTab = "home",
@@ -28,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   onHamburgerClick,
   showHamburger = false,
   hideNavLinks = false,
+  hideThemeLanguageToggles = false,
 }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -102,23 +103,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Status Indicators & Installation */}
         <div className="hidden md:flex items-center gap-3">
-          <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-              isOnline
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-            }`}
-          >
-            {isOnline ? (
-              <>
-                <Wifi className="h-3 w-3" /> {t("header.statusOnline")}
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-3 w-3" /> {t("header.statusOffline")}
-              </>
-            )}
-          </span>
+          <ConnectionStatus />
 
           {installPrompt && onInstall && (
             <button
@@ -128,8 +113,12 @@ export const Header: React.FC<HeaderProps> = ({
               <Download className="h-3.5 w-3.5" /> {t("header.installApp")}
             </button>
           )}
-          <LanguageToggle />
-          <ThemeToggle />
+          {!hideThemeLanguageToggles && (
+            <>
+              <LanguageToggle />
+              <ThemeToggle />
+            </>
+          )}
 
           {/* User Profile dropdown wrapper */}
           {user && (
@@ -169,19 +158,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Mobile menu controls */}
         <div className="flex items-center gap-2 md:hidden">
-          <span
-            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-              isOnline
-                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-            }`}
-          >
-            {isOnline ? (
-              <Wifi className="h-3 w-3" />
-            ) : (
-              <WifiOff className="h-3 w-3" />
-            )}
-          </span>
+          <ConnectionStatus />
 
           {installPrompt && onInstall && (
             <button
@@ -193,8 +170,12 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          <LanguageToggle />
-          <ThemeToggle />
+          {!hideThemeLanguageToggles && (
+            <>
+              <LanguageToggle />
+              <ThemeToggle />
+            </>
+          )}
 
           {/* User Profile and logout on mobile if user exists */}
           {user && (

@@ -64,4 +64,13 @@ Project Whale Shark is a responsive, installable Yard-Sale (PWA) application des
   └── types/            # DTOs, request/response models, hook return types
   ```
 
+### 4. Zero Hardcoded Strings & i18n (STRICT)
+- Never write raw text in components, views, or layouts (including buttons, error alerts, labels, placeholders, alt/aria-labels, or dynamic notifications).
+- All strings must be loaded dynamically using the `useTranslation()` hook and hierarchical keys (e.g. `t('yard_sale.product.add_to_cart')`).
+- Every translation key must exist in both `es.json` (default language) and `en.json` (secondary language) with equivalent translation structures.
+
+### 5. Semantic Theming & CSS Variable Tokens (STRICT)
+- Do not use hardcoded Tailwind color names (e.g. `bg-slate-900`, `border-slate-800`, `text-slate-400`, `text-cyan-400`) in markup.
+- You must exclusively use semantic design tokens defined in `index.css` (e.g. `bg-canvas`, `bg-surface`, `bg-surface-elevated`, `text-content-primary`, `text-content-secondary`, `text-content-muted`, `bg-accent-blue`, `text-accent-blue`, `border-border-subtle`) to support clean dynamic toggling between dark and light themes.
+
 

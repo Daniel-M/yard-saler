@@ -84,7 +84,7 @@ export const IdleFormState: React.FC<IdleFormStateProps> = ({
           {t("auth.verify.title")}
         </h2>
         <p className="text-sm text-content-secondary leading-relaxed">
-          {t("auth.verify.loading")}
+          {t("auth.verify.manual.description", "Enter the 6-digit code sent to your email.")}
         </p>
       </div>
 

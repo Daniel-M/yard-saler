@@ -161,7 +161,7 @@ export default function LoginView({
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/v1/auth/google/login";
+    window.location.href = "/api/auth/google/login";
   };
 
   return (

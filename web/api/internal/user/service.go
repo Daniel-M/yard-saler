@@ -378,3 +378,35 @@ func parseGoogleToken(token string) (*GoogleClaims, error) {
 	}
 	return &claims, nil
 }
+
+// UpdateUserSettings updates settings of an authenticated user, including password if provided.
+func (s *UserService) UpdateUserSettings(ctx context.Context, userID string, d dto.UpdateUserSettingsDTO) (*domain.User, error) {
+	u, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %w", err)
+	}
+	if u == nil {
+		return nil, ErrUserNotFound
+	}
+
+	u.FirstName = d.FirstName
+	u.LastName = d.LastName
+	if d.MobilePhone != nil {
+		u.MobilePhone = *d.MobilePhone
+	}
+	if d.Socials != nil {
+		u.Socials = *d.Socials
+	}
+
+	if d.Password != nil && *d.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(*d.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return nil, fmt.Errorf("failed to hash password: %w", err)
+		}
+		u.PasswordHash = string(hash)
+	}
+	u.UpdatedAt = time.Now()
+
+	return s.repo.Update(ctx, u)
+}
+

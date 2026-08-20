@@ -152,22 +152,30 @@ export default function LoginView({
 
       if (isSigningUp) {
         await preRegister(data);
+        onLoginSuccess?.({
+          is_sign_up: true,
+          user: {
+            id: "",
+            email: data.email,
+            is_verified: false,
+            profile_complete: false,
+          },
+        });
+      } else {
+        // Login returns the promise response directly
+        const response = (await login(data)) as UserLoginResponseDTO;
+        onLoginSuccess?.({
+          ...response,
+          is_sign_up: response.is_sign_up ?? false,
+        });
       }
-
-      // Login returns the promise response directly
-      const response = (await login(data)) as UserLoginResponseDTO;
-
-      onLoginSuccess?.({
-        ...response,
-        is_sign_up: response.is_sign_up ?? isSigningUp,
-      });
     } catch {
       // Errors are caught and handled by hook error states
     }
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/v1/auth/google/login";
+    window.location.href = "/api/auth/google/login";
   };
 
   return (

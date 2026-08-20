@@ -22,11 +22,15 @@
     "theme": {
       "toggleLabel": "Cambiar tema de color",
       "darkMode": "Modo oscuro",
-      "lightMode": "Modo claro"
+      "lightMode": "Cambiar tema de color"
     },
     "language": {
       "toggleLabel": "Cambiar a Inglés",
       "currentCode": "ES"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "close": "Cerrar"
     }
   },
   "auth": {
@@ -163,6 +167,113 @@
       "ariaLabel": "Menú de navegación",
       "closeAriaLabel": "Cerrar menú de navegación",
       "openAriaLabel": "Abrir menú de navegación"
+    }
+  },
+  "yard_sale": {
+    "status": {
+      "online": "Conectado al servidor",
+      "offline": "Desconectado - Reintentando"
+    },
+    "settings": {
+      "title": "Ajustes de la cuenta",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "mobilePhone": "Teléfono Móvil",
+      "socials": "URL del Perfil Social",
+      "email": "Correo Electrónico (Solo lectura)",
+      "password": "Nueva Contraseña (Opcional)",
+      "save": "Guardar cambios",
+      "success": "Configuración actualizada con éxito"
+    },
+    "carousel": {
+      "prev": "Diapositiva anterior",
+      "next": "Diapositiva siguiente",
+      "image_index": "Diapositiva {{index}} de {{total}}"
+    },
+    "create": {
+      "title": "Crear Venta de Garaje",
+      "eventTitle": "Título del Evento",
+      "description": "Descripción",
+      "location": "Dirección de la Ubicación",
+      "startDate": "Fecha y hora de inicio",
+      "endDate": "Fecha y hora de finalización",
+      "submit": "Crear Evento"
+    },
+    "detail": {
+      "addProduct": "Añadir Artículo a la Venta",
+      "noProducts": "Aún no hay productos listados para esta venta de garaje.",
+      "detail_error": "Error al cargar los detalles de la venta de garaje",
+      "not_found": "Venta de garaje no encontrada",
+      "schedule": "Horario",
+      "location": "Ubicación",
+      "host_id": "ID del anfitrión",
+      "listed_items": "Artículos publicados",
+      "add_first_product": "Añade tu primer producto",
+      "status": {
+        "now": "En curso",
+        "upcoming": "Próximo",
+        "completed": "Completado"
+      }
+    },
+    "product": {
+      "createTitle": "Añadir Producto",
+      "name": "Nombre del Artículo",
+      "price": "Precio (USD)",
+      "condition": "Estado",
+      "status": "Disponibilidad",
+      "uploadImages": "Subir Imágenes",
+      "submit": "Listar Producto",
+      "conditions": {
+        "new": "Nuevo",
+        "like_new": "Como nuevo",
+        "good": "Bueno",
+        "fair": "Aceptable",
+        "poor": "Deficiente"
+      },
+      "statuses": {
+        "available": "Disponible",
+        "pending": "Pendiente",
+        "sold": "Vendido"
+      },
+      "decrease_quantity": "Disminuir cantidad",
+      "increase_quantity": "Aumentar cantidad",
+      "add_to_cart": "Añadir al carrito",
+      "unavailable": "No disponible",
+      "remove_from_wishlist": "Eliminar de la lista de deseos",
+      "add_to_wishlist": "Añadir a la lista de deseos",
+      "message_seller": "Enviar mensaje al vendedor",
+      "message_empty": "El mensaje no puede estar vacío",
+      "message_send_failed": "Error al enviar el mensaje",
+      "message_seller_title": "Mensaje al vendedor",
+      "close_dialog": "Cerrar diálogo",
+      "summary_label": "Resumen del producto",
+      "your_message_label": "Tu mensaje",
+      "message_placeholder": "Hola, ¿sigue disponible este artículo?",
+      "detail_error": "Error al cargar los detalles del producto",
+      "not_found": "Producto no encontrado",
+      "added_to_cart": "¡Añadido al carrito!",
+      "add_to_cart_error": "Error al añadir al carrito",
+      "cart_updated": "¡Carrito actualizado!",
+      "cart_update_error": "Error al actualizar el carrito",
+      "removed_from_cart": "Eliminado del carrito",
+      "removed_from_wishlist": "Eliminado de la lista de deseos",
+      "added_to_wishlist": "¡Añadido a la lista de deseos!",
+      "wishlist_update_error": "Error al actualizar la lista de deseos",
+      "message_sent": "¡Mensaje enviado al vendedor!",
+      "condition_label": "Estado",
+      "status_label": "Disponibilidad",
+      "description_label": "Descripción",
+      "back_to_event": "Volver al evento",
+      "back_to_dashboard": "Volver al tablero",
+      "back_to_home": "Volver al inicio",
+      "error_price": "Por favor, ingresa un precio válido.",
+      "error_upload_image": "Error al cargar la(s) imagen(es)",
+      "error_list_product": "Error al listar el producto",
+      "select_files": "Seleccionar archivos para subir",
+      "uploading_images": "Subiendo imágenes...",
+      "preview_image": "Vista previa {{index}}",
+      "listing_product": "Listando producto...",
+      "upload_failed": "Error de carga: {{statusText}}"
     }
   }
 }

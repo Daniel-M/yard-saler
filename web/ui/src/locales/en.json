@@ -27,6 +27,10 @@
     "language": {
       "toggleLabel": "Switch to Spanish",
       "currentCode": "EN"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "close": "Close"
     }
   },
   "auth": {
@@ -163,6 +167,113 @@
       "ariaLabel": "Navigation Menu",
       "closeAriaLabel": "Close navigation menu",
       "openAriaLabel": "Open navigation menu"
+    }
+  },
+  "yard_sale": {
+    "status": {
+      "online": "Connected to server",
+      "offline": "Offline - Reconnecting"
+    },
+    "settings": {
+      "title": "Account Settings",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "mobilePhone": "Mobile Phone",
+      "socials": "Social Profile URL",
+      "email": "Email Address (Read-only)",
+      "password": "New Password (Optional)",
+      "save": "Save Changes",
+      "success": "Settings updated successfully"
+    },
+    "carousel": {
+      "prev": "Previous slide",
+      "next": "Next slide",
+      "image_index": "Slide {{index}} of {{total}}"
+    },
+    "create": {
+      "title": "Create Yard Sale",
+      "eventTitle": "Event Title",
+      "description": "Description",
+      "location": "Location Address",
+      "startDate": "Start Date & Time",
+      "endDate": "End Date & Time",
+      "submit": "Create Event"
+    },
+    "detail": {
+      "addProduct": "Add Item to Sale",
+      "noProducts": "No products listed for this yard sale yet.",
+      "detail_error": "Failed to load yard sale details",
+      "not_found": "Yard sale not found",
+      "schedule": "Schedule",
+      "location": "Location",
+      "host_id": "Host ID",
+      "listed_items": "Listed Items",
+      "add_first_product": "Add Your First Product",
+      "status": {
+        "now": "Happening Now",
+        "upcoming": "Upcoming",
+        "completed": "Completed"
+      }
+    },
+    "product": {
+      "createTitle": "Add Product",
+      "name": "Item Name",
+      "price": "Price (USD)",
+      "condition": "Condition",
+      "status": "Availability Status",
+      "uploadImages": "Upload Images",
+      "submit": "List Product",
+      "conditions": {
+        "new": "New",
+        "like_new": "Like New",
+        "good": "Good",
+        "fair": "Fair",
+        "poor": "Poor"
+      },
+      "statuses": {
+        "available": "Available",
+        "pending": "Pending",
+        "sold": "Sold"
+      },
+      "decrease_quantity": "Decrease quantity",
+      "increase_quantity": "Increase quantity",
+      "add_to_cart": "Add to Cart",
+      "unavailable": "Unavailable",
+      "remove_from_wishlist": "Remove from Wishlist",
+      "add_to_wishlist": "Add to Wishlist",
+      "message_seller": "Message Seller",
+      "message_empty": "Message cannot be empty",
+      "message_send_failed": "Failed to send message",
+      "message_seller_title": "Message Seller",
+      "close_dialog": "Close dialog",
+      "summary_label": "Product Summary",
+      "your_message_label": "Your Message",
+      "message_placeholder": "Hi, is this item still available?",
+      "detail_error": "Failed to load product details",
+      "not_found": "Product not found",
+      "added_to_cart": "Added to cart!",
+      "add_to_cart_error": "Failed to add to cart",
+      "cart_updated": "Cart updated!",
+      "cart_update_error": "Failed to update cart",
+      "removed_from_cart": "Removed from cart",
+      "removed_from_wishlist": "Removed from wishlist",
+      "added_to_wishlist": "Added to wishlist!",
+      "wishlist_update_error": "Failed to update wishlist",
+      "message_sent": "Message sent to seller!",
+      "condition_label": "Condition",
+      "status_label": "Status",
+      "description_label": "Description",
+      "back_to_event": "Back to Event",
+      "back_to_dashboard": "Back to Dashboard",
+      "back_to_home": "Back to Home",
+      "error_price": "Please enter a valid price.",
+      "error_upload_image": "Failed to upload image(s)",
+      "error_list_product": "Failed to list product",
+      "select_files": "Select files to upload",
+      "uploading_images": "Uploading images...",
+      "preview_image": "Preview {{index}}",
+      "listing_product": "Listing Product...",
+      "upload_failed": "Upload failed: {{statusText}}"
     }
   }
 }

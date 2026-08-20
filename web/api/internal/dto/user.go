@@ -149,3 +149,25 @@ type UserProfileDTO struct {
 	MobilePhone string     `json:"mobile_phone"`
 	Socials     string     `json:"socials"`
 }
+
+type UpdateUserSettingsDTO struct {
+	FirstName   string  `json:"first_name"`
+	LastName    string  `json:"last_name"`
+	MobilePhone *string `json:"mobile_phone"`
+	Socials     *string `json:"socials"`
+	Password    *string `json:"password"`
+}
+
+func (d UpdateUserSettingsDTO) Validate() error {
+	if d.FirstName == "" {
+		return errors.New("first name is required")
+	}
+	if d.LastName == "" {
+		return errors.New("last name is required")
+	}
+	if d.Password != nil && *d.Password != "" && len(*d.Password) < 6 {
+		return errors.New("password must be at least 6 characters")
+	}
+	return nil
+}
+

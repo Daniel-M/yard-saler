@@ -10,12 +10,16 @@ import (
 	"time"
 
 	"github.com/Daniel-M/ys-api/internal/auth"
+	"github.com/Daniel-M/ys-api/internal/cart"
 	"github.com/Daniel-M/ys-api/internal/config"
 	"github.com/Daniel-M/ys-api/internal/database"
 	"github.com/Daniel-M/ys-api/internal/http/handlers"
 	"github.com/Daniel-M/ys-api/internal/logger"
+	"github.com/Daniel-M/ys-api/internal/messaging"
 	"github.com/Daniel-M/ys-api/internal/middleware"
 	"github.com/Daniel-M/ys-api/internal/user"
+	"github.com/Daniel-M/ys-api/internal/wishlist"
+	"github.com/Daniel-M/ys-api/internal/yard_sale"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -65,6 +69,24 @@ func main() {
 	userService := user.NewUserService(userRepo)
 	userHandler := handlers.NewUserHandler(userService, tokenIssuer)
 
+	ysRepo := yard_sale.NewSqliteRepository(db)
+	ysService := yard_sale.NewService(ysRepo)
+	ysHandler := handlers.NewYardSaleHandler(ysService)
+
+	cartRepo := cart.NewSqliteRepository(db)
+	cartService := cart.NewService(cartRepo, ysRepo)
+	cartHandler := handlers.NewCartHandler(cartService)
+
+	wishRepo := wishlist.NewSqliteRepository(db)
+	wishService := wishlist.NewService(wishRepo, ysRepo)
+	wishHandler := handlers.NewWishlistHandler(wishService)
+
+	msgRepo := messaging.NewSqliteRepository(db)
+	msgService := messaging.NewService(msgRepo, ysRepo)
+	msgHandler := handlers.NewMessagingHandler(msgService)
+
+	uploadHandler := handlers.NewUploadHandler("uploads")
+
 	// 6. Router setup
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /users", userHandler.CreateUser)
@@ -80,10 +102,50 @@ func main() {
 	mux.HandleFunc("POST /user/auth/oauth/google", userHandler.OAuthGoogle)
 	mux.HandleFunc("POST /user/details/register", userHandler.PreRegister)
 
-	// PASETO protected route
+	// Health
+	mux.HandleFunc("GET /health", handlers.HealthCheck)
+
+	// PASETO protected routes
 	authMiddleware := middleware.Auth(tokenIssuer)
 	mux.Handle("PUT /user/details", authMiddleware(http.HandlerFunc(userHandler.EditDetails)))
 	mux.Handle("GET /user/me", authMiddleware(http.HandlerFunc(userHandler.GetProfile)))
+
+	// User setting update
+	mux.Handle("PUT /api/users/me", authMiddleware(http.HandlerFunc(userHandler.UpdateSettings)))
+
+	// File Upload
+	mux.Handle("POST /api/upload", authMiddleware(http.HandlerFunc(uploadHandler.UploadFile)))
+
+	// Yard Sale Event Endpoints
+	mux.Handle("POST /api/yard-sales", authMiddleware(http.HandlerFunc(ysHandler.CreateYardSale)))
+	mux.Handle("GET /api/yard-sales/me", authMiddleware(http.HandlerFunc(ysHandler.ListMyYardSales)))
+	mux.HandleFunc("GET /api/yard-sales", ysHandler.ListYardSales)
+	mux.HandleFunc("GET /api/yard-sales/{id}", ysHandler.GetYardSale)
+	mux.Handle("POST /api/yard-sales/{id}/products", authMiddleware(http.HandlerFunc(ysHandler.AddProduct)))
+
+	// --- Tracks B & C endpoints with clean /api/ prefix ---
+
+	// Public Event & Product Resolution
+	mux.HandleFunc("GET /api/public/ys/e/{event_code}", ysHandler.GetPublicYardSaleByEventCode)
+	mux.HandleFunc("GET /api/public/ys/e/{event_code}/p/{product_code}", ysHandler.GetPublicProductByCodes)
+
+	// Cart Endpoints
+	mux.Handle("GET /api/cart", authMiddleware(http.HandlerFunc(cartHandler.GetCart)))
+	mux.Handle("POST /api/cart", authMiddleware(http.HandlerFunc(cartHandler.AddToCart)))
+	mux.Handle("PATCH /api/cart/items/{id}", authMiddleware(http.HandlerFunc(cartHandler.UpdateCartItem)))
+	mux.Handle("DELETE /api/cart/items/{id}", authMiddleware(http.HandlerFunc(cartHandler.RemoveCartItem)))
+
+	// Wishlist Endpoints
+	mux.Handle("GET /api/wishlist", authMiddleware(http.HandlerFunc(wishHandler.GetWishlist)))
+	mux.Handle("POST /api/wishlist", authMiddleware(http.HandlerFunc(wishHandler.AddToWishlist)))
+	mux.Handle("DELETE /api/wishlist/items/{id}", authMiddleware(http.HandlerFunc(wishHandler.RemoveWishlistItem)))
+
+	// Messaging Threads Endpoints
+	mux.Handle("POST /api/messages/threads", authMiddleware(http.HandlerFunc(msgHandler.StartThread)))
+
+	// Static uploads directory serving
+	fsHandler := http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads")))
+	mux.Handle("GET /uploads/", fsHandler)
 
 	handler := middleware.Chain(mux, middleware.Logger, middleware.CORS(cfg.CORS.AllowedOrigins))
 

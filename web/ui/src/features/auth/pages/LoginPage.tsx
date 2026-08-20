@@ -14,29 +14,26 @@ export const LoginPage = () => {
     token?: string;
   }) => {
     console.log("Login success:", data);
+
+    if (data.user) {
+      setUser(data.user);
+    }
+    if (data.token) {
+      setToken(data.token);
+    }
     if (data.is_sign_up) {
       navigate("/auth/verify", { state: { fromSignUp: true } });
+      return;
+    }
+    if (!data.user.profile_complete) {
+      navigate("/user/register", { replace: true });
     } else {
-      if (data.token) {
-        setToken(data.token);
-      }
-
-      if (!data.user.profile_complete) {
-        setUser(data.user);
-        navigate("/user/register", { replace: true });
-      }
-
-      if (data.user) {
-        setUser(data.user);
-      }
-
-      // navigate(location.state?.from || "/user/dashboard", { replace: true });
       navigate("/user/dashboard", { replace: true });
     }
   };
 
   const handleForgotPasswordClick = () => {
-    navigate("/reset-password");
+    navigate("/auth/reset-password");
   };
 
   return (

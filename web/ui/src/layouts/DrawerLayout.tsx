@@ -1,9 +1,11 @@
 import { useAuth } from "@context/AuthContext";
 import { useDrawer } from "@context/DrawerContext";
+import { LanguageToggle } from "@components/LanguageToggle";
+import { ThemeToggle } from "@components/ThemeToggle";
 import { Home, LogOut, Search, Settings, Tag, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
 import { Header } from "./Header";
 import { UnverifiedBanner } from "./UnverifiedBanner";
@@ -28,6 +30,7 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
 export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { user } = useAuth();
 
@@ -138,7 +141,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
   ];
 
   const handleSettingsClick = () => {
-    setIsSettingsModalOpen(true);
+    navigate("/user/settings");
   };
 
   const handleProfileClick = () => {
@@ -257,6 +260,11 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
               </span>
             </button>
 
+            <div className="flex items-center gap-2 px-1 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
+
             <div className="relative flex items-center justify-between h-12 px-2 rounded-lg bg-[var(--surface-elevated)]/50 lg:bg-transparent lg:group-hover:bg-[var(--surface-elevated)]/50 lg:group-focus-within:bg-[var(--surface-elevated)]/50 transition-colors duration-300">
               <button
                 onClick={handleProfileClick}
@@ -368,6 +376,11 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
               {t("dashboard.nav.settings")}
             </button>
 
+            <div className="flex items-center gap-2 px-3">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
+
             <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--surface-elevated)]/50">
               <button
                 onClick={() => {
@@ -423,6 +436,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
             showHamburger={true}
             onHamburgerClick={openDrawer}
             hideNavLinks={true}
+            hideThemeLanguageToggles={true}
           />
 
           {/* Sticky Offline Banner */}
