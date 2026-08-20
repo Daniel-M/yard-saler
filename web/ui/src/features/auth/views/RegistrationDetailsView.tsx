@@ -38,14 +38,14 @@ export function RegistrationDetailsView({
       localStorage.getItem("token") ||
       "";
     if (!token) {
-      navigate("/login", { replace: true });
+      navigate("/auth/login", { replace: true });
       return;
     }
 
-    if (location.pathname === "/register-details") {
+    if (location.pathname === "/user/register") {
       const status = localStorage.getItem("user_status");
       if (status === "VERIFIED_COMPLETE") {
-        navigate("/dashboard", { replace: true });
+        navigate("/user/dashboard", { replace: true });
       }
     }
   }, [navigate, location.pathname]);
@@ -122,7 +122,7 @@ export function RegistrationDetailsView({
       if (onRegistrationComplete) {
         onRegistrationComplete();
       }
-      navigate("/dashboard");
+      navigate("/user/dashboard");
     } catch (err: unknown) {
       setIsLoading(false);
       const errMsg =

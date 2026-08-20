@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import type { UserProfile } from '../../../context/AuthContext';
-import { getProfile } from '../api/auth.api';
+import type { UserProfile } from '@type/auth.types';
+import { UserApiClient } from '../api/auth.api';
 
 export const useUserProfile = () => {
   const { setUser, user } = useAuth();
@@ -18,7 +18,8 @@ export const useUserProfile = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getProfile(abortControllerRef.current.signal);
+      const client = new UserApiClient();
+      const data = await client.getProfile(abortControllerRef.current.signal);
       if (data) {
         const profile: UserProfile = {
           id: data.id,
@@ -34,6 +35,7 @@ export const useUserProfile = () => {
           verifiedAt: data.verified_at,
           mobilePhone: data.mobile_phone,
           socials: data.socials,
+          profile_complete: data.profile_complete,
         };
         setUser(profile);
         return profile;

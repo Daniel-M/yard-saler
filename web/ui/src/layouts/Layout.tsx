@@ -15,6 +15,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({
+  children,
   isOnline,
   installPrompt,
   onInstall,
@@ -32,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({
         onTabChange={onTabChange}
       />
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:py-12 w-full flex flex-col">
-        <Outlet />
+        {children || <Outlet />}
       </main>
       <Footer />
     </div>

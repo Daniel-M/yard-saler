@@ -58,3 +58,20 @@ export interface UserResponseDTO {
   profile_complete: boolean;
   account_age: number;
 }
+
+export interface UserProfile {
+  id: string;
+  displayName: string;
+  email: string;
+  initials: string;
+  avatarUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  verifiedAt: string | null;
+  mobilePhone?: string;
+  socials?: string;
+  profile_complete?: boolean;
+}

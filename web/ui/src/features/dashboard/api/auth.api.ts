@@ -6,7 +6,7 @@ import type {
   UserPasswordResetDTO,
   UserLoginResponseDTO,
   UserResponseDTO,
-} from "../types/auth.types";
+} from "@type/auth.types";
 
 type UserApiClientConfig = {
   baseUrl?: string;

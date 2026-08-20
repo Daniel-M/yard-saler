@@ -7,7 +7,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const status = localStorage.getItem("user_status");
     if (status === "VERIFIED_PENDING_DETAILS") {
-      navigate("/register", { replace: true });
+      navigate("/user/register", { replace: true });
     }
   }, [navigate]);
 

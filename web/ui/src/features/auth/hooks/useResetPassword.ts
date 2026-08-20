@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { passwordReset } from '../api/auth.api';
-import type { UserPasswordResetDTO } from '../types/auth.types';
+import { UserApiClient } from '../api/auth.api';
+import type { UserPasswordResetDTO } from '@type/auth.types';
 
 export const useResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +19,8 @@ export const useResetPassword = () => {
     setIsSuccess(false);
 
     try {
-      await passwordReset(variables, abortControllerRef.current.signal);
+      const client = new UserApiClient();
+      await client.passwordReset(variables, abortControllerRef.current.signal);
       setIsSuccess(true);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {

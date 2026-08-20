@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { UserApiClient } from "../api/auth.api";
-import type { UserDTO, UserResponseDTO } from "../types/auth.types";
+import type { UserDTO, UserResponseDTO } from "@type/auth.types";
 
 export const useEditDetails = () => {
   const [isLoading, setIsLoading] = useState(false);

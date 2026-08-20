@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { UserApiClient } from "../api/auth.api";
-import type { UserVerifyDTO, UserLoginResponseDTO } from "../types/auth.types";
+import type { UserVerifyDTO, UserLoginResponseDTO } from "@type/auth.types";
 
 export const useVerifyCode = () => {
   const [isLoading, setIsLoading] = useState(false);

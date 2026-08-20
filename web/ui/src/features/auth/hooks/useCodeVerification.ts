@@ -20,7 +20,7 @@ export const useCodeVerification = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { mutate: verify } = useVerifyCode();
-  const { setToken } = useAuth();
+  const { setToken, setUser } = useAuth();
 
   const { code: codeFromUrl } = useParams();
 
@@ -52,15 +52,22 @@ export const useCodeVerification = ({
         setReceivedToken(receivedToken);
 
         if (receivedToken) {
-          localStorage.setItem("user_status", "VERIFIED_PENDING_DETAILS");
+          localStorage.setItem("user_status", data.user?.profile_complete ? "VERIFIED_COMPLETE" : "VERIFIED_PENDING_DETAILS");
           localStorage.setItem("token", receivedToken);
           setToken(receivedToken);
+          if (data.user) {
+            setUser(data.user);
+          }
         }
 
         onVerificationSuccess?.(receivedToken);
 
         const timer = setTimeout(() => {
-          navigate("/register-details");
+          if (data.user?.profile_complete) {
+            navigate("/user/dashboard", { replace: true });
+          } else {
+            navigate("/user/register", { replace: true });
+          }
         }, 1500);
 
         return () => clearTimeout(timer);
@@ -78,6 +85,7 @@ export const useCodeVerification = ({
       status,
       verify,
       setToken,
+      setUser,
       onVerificationSuccess,
       onVerificationError,
       navigate,

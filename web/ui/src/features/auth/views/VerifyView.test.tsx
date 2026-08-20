@@ -2,10 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import VerifyView from './VerifyView';
-import { useVerifyCode } from '../features/auth/hooks/useVerifyCode';
+import { useVerifyCode } from '../hooks/useVerifyCode';
+import { useAuth } from '@context/AuthContext';
 
 const mockVerify = vi.fn();
-vi.mock('../features/auth/hooks/useVerifyCode', () => ({
+vi.mock('../hooks/useVerifyCode', () => ({
   useVerifyCode: vi.fn(() => ({
     mutate: mockVerify,
     isLoading: false,
@@ -20,15 +21,12 @@ const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
 let mockLocation: { state: any } = { state: null };
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-    useSearchParams: () => [mockSearchParams, vi.fn()],
-    useLocation: () => mockLocation,
-  };
-});
+vi.mock('react-router', () => ({
+  useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation,
+  useParams: () => ({ code: mockSearchParams.get('code') || undefined }),
+  useSearchParams: () => [mockSearchParams, vi.fn()],
+}));
 
 vi.mock('../components/layout/Header', () => ({
   Header: () => <header role="banner">Mock Header</header>,
@@ -59,10 +57,12 @@ vi.mock('react-i18next', () => ({
 }));
 
 const mockSetToken = vi.fn();
-vi.mock('../context/AuthContext', () => ({
+vi.mock('@context/AuthContext', () => ({
   useAuth: () => ({
     token: null,
     setToken: mockSetToken,
+    user: null,
+    setUser: vi.fn(),
   }),
 }));
 
@@ -145,7 +145,7 @@ describe('VerifyView Component', () => {
     });
 
     expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'VERIFIED_PENDING_DETAILS');
-    expect(localStorage.setItem).toHaveBeenCalledWith('paseto_token', 'MOCK_TOKEN');
+    expect(localStorage.setItem).toHaveBeenCalledWith('token', 'MOCK_TOKEN');
     expect(mockSetToken).toHaveBeenCalledWith('MOCK_TOKEN');
 
     // Callback simulation for redirect
@@ -154,7 +154,7 @@ describe('VerifyView Component', () => {
     expect(redirectCall).toBeDefined();
     redirectCall![0]();
 
-    expect(mockNavigate).toHaveBeenCalledWith('/register-details');
+    expect(mockNavigate).toHaveBeenCalledWith('/user/register', { replace: true });
   });
 
   it('handles explore as guest skip option', async () => {
@@ -194,8 +194,8 @@ describe('VerifyView Component', () => {
     expect(mockVerify).toHaveBeenCalledTimes(2);
   });
 
-  it('renders Header component', () => {
+  it('renders main component structure', () => {
     render(<VerifyView />);
-    expect(screen.getByRole('banner')).toBeInTheDocument();
+    expect(screen.getByRole('main')).toBeInTheDocument();
   });
 });

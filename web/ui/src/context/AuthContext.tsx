@@ -1,4 +1,4 @@
-import type { LoggedUserDTO } from "@type/auth.types";
+import type { LoggedUserDTO, UserProfile } from "@type/auth.types";
 import React, {
   type ReactNode,
   createContext,
@@ -7,11 +7,13 @@ import React, {
   useState,
 } from "react";
 
+export type { UserProfile };
+
 interface AuthContextType {
   token: string | null;
   setToken: (token: string | null) => void;
-  user: LoggedUserDTO | null;
-  setUser: (user: LoggedUserDTO | null) => void;
+  user: UserProfile | LoggedUserDTO | null;
+  setUser: (user: UserProfile | LoggedUserDTO | null) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -24,14 +26,16 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem("token");
+    return localStorage.getItem("paseto_token") || localStorage.getItem("token");
   });
-  const [user, setUser] = useState<LoggedUserDTO | null>(null);
+  const [user, setUser] = useState<UserProfile | LoggedUserDTO | null>(null);
 
   useEffect(() => {
     if (token) {
+      localStorage.setItem("paseto_token", token);
       localStorage.setItem("token", token);
     } else {
+      localStorage.removeItem("paseto_token");
       localStorage.removeItem("token");
       setUser(null);
     }

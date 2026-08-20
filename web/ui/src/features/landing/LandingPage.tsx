@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate } from "react-router";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Layout } from '../components/layout/Layout';
-import { HeroSection } from '../components/landing/HeroSection';
-import { FeatureCard } from '../components/landing/FeatureCard';
+import Layout from '@layouts/Layout';
+import { HeroSection } from './HeroSection';
+import { FeatureCard } from './FeatureCard';
 import { ShieldCheck, Zap } from 'lucide-react';
 
 export default function LandingPage() {

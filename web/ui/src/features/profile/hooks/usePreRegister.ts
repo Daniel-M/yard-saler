@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { UserApiClient } from "../api/auth.api";
-import type { UserPreRegisterDTO } from "../types/auth.types";
+import { UserApiClient } from "../api/settings.api";
+import type { UserPreRegisterDTO } from "@type/auth.types";
 
 export const usePreRegister = () => {
   const [isLoading, setIsLoading] = useState(false);

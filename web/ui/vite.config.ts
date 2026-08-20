@@ -48,22 +48,7 @@ export default defineConfig({
 
   test: {
     globals: true, // enables global `describe`, `it`, etc.
-    // Projects array – each entry is a full test config
-    projects: [
-      {
-        // Browser (React) tests
-        environment: "jsdom",
-        setupFiles: "./src/setupTests.ts",
-        include: ["src/**/*.{test,spec}.{jsx,tsx}"],
-        exclude: ["**/*.{test,spec}.{js,ts}"], // exclude pure JS/TS files
-      },
-      {
-        // Node / unit tests (non-React)
-        environment: "node",
-        include: ["**/*.{test,spec}.{js,ts}"],
-        exclude: ["src/**/*.{test,spec}.{jsx,tsx}"], // exclude JSX/TSX
-        setupFiles: [], // no extra setup needed
-      },
-    ],
+    environment: "jsdom",
+    setupFiles: "./src/setupTests.ts",
   },
 });

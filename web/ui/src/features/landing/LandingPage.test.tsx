@@ -3,11 +3,26 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from "react-router";
 import { I18nextProvider } from 'react-i18next';
-import i18n from '../i18n';
+import i18n from '../../i18n';
 import LandingPage from './LandingPage';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 
-import { ThemeProvider } from '../context/ThemeContext';
+import { ThemeProvider } from '../../context/ThemeContext';
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (str: string) => str,
+    i18n: {
+      language: 'en',
+      changeLanguage: () => Promise.resolve(),
+    },
+  }),
+  I18nextProvider: ({ children }: any) => children,
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));
 
 describe('LandingPage', () => {
   beforeEach(() => {
@@ -28,20 +43,20 @@ describe('LandingPage', () => {
     );
 
     // Hero content
-    expect(screen.getByText('Welcome to Whale Shark')).toBeInTheDocument();
+    expect(screen.getByText('landing.hero.title')).toBeInTheDocument();
     
     // CTAs
-    const ctaPrimary = screen.getByRole('button', { name: 'Start for free' });
+    const ctaPrimary = screen.getByRole('button', { name: 'landing.hero.ctaPrimary' });
     expect(ctaPrimary).toBeInTheDocument();
     expect(ctaPrimary.getAttribute('href')).toBe('/login');
 
-    const ctaSecondary = screen.getByRole('button', { name: 'Learn more' });
+    const ctaSecondary = screen.getByRole('button', { name: 'landing.hero.ctaSecondary' });
     expect(ctaSecondary).toBeInTheDocument();
     expect(ctaSecondary.getAttribute('href')).toBe('/about');
 
     // Features
-    expect(screen.getByText('Lightning fast performance')).toBeInTheDocument();
-    expect(screen.getByText('Bank-grade security')).toBeInTheDocument();
+    expect(screen.getByText('landing.features.speed.title')).toBeInTheDocument();
+    expect(screen.getByText('landing.features.security.title')).toBeInTheDocument();
   });
 
   it('redirects to /dashboard when authenticated', () => {
@@ -61,6 +76,6 @@ describe('LandingPage', () => {
     );
 
     expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
-    expect(screen.queryByText('Welcome to Whale Shark')).not.toBeInTheDocument();
+    expect(screen.queryByText('landing.hero.title')).not.toBeInTheDocument();
   });
 });
