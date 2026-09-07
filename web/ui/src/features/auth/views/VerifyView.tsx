@@ -63,7 +63,7 @@ export const VerifyView: React.FC<VerifyViewProps> = ({
         {status === "success" && <SuccessState />}
         {status === "idle" && (
           <IdleFormState
-            isLoading={status === "loading"}
+            isLoading={false}
             onSubmit={performVerification}
             onExploreAsGuest={handleExploreAsGuest}
             onBackToLogin={handleBackToLogin}

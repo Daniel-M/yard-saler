@@ -13,6 +13,7 @@ import { ContactButton } from "@features/header/components/ContactButton";
 
 
 export interface HeaderProps {
+  isOnline?: boolean;
   installPrompt?: any;
   onInstall?: () => void;
   activeTab?: string;

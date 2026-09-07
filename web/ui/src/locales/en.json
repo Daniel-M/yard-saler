@@ -1,6 +1,6 @@
 {
   "header": {
-    "title": "Whale Shark",
+    "title": "Yard Saler",
     "statusOnline": "Online",
     "statusOffline": "Offline Mode",
     "installApp": "Install App",
@@ -28,7 +28,7 @@
   },
 
   "footer": {
-    "copyright": "© {{year}} Whale Shark. All rights reserved.",
+    "copyright": "© {{year}} Yard Saler. All rights reserved.",
     "links": {
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
@@ -156,7 +156,7 @@
   },
   "landing": {
     "hero": {
-      "title": "Welcome to Whale Shark",
+      "title": "Welcome to Yard Saler",
       "subtitle": "The ultimate platform to manage your projects with speed and security.",
       "ctaPrimary": "Start for free",
       "ctaSecondary": "Learn more"
@@ -166,7 +166,7 @@
       "security": { "title": "Bank-grade security", "desc": "Your data is always protected." }
     },
     "footer": {
-      "rights": "© 2026 Project Whale Shark. All rights reserved."
+      "rights": "© 2026 Project Yard Saler. All rights reserved."
     }
   },
   "dashboard": {

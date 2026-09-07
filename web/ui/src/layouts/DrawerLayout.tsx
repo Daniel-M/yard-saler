@@ -23,6 +23,7 @@ export interface NavigationItem {
 
 interface DrawerLayoutProps {
   onLogout?: () => void;
+  children?: React.ReactNode;
 }
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {

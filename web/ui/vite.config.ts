@@ -1,6 +1,6 @@
-import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import path from "path";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -31,10 +31,9 @@ export default defineConfig({
         enabled: true,
       },
       manifest: {
-        name: "Whale Shark",
-        short_name: "WhaleShark",
-        description:
-          "High-performance responsive Yard-Sale PWA built with Vite and Tailwind",
+        name: "Yard-Saler",
+        short_name: "YS",
+        description: "Responsive Yard-Sale PWA built with Vite and Tailwind",
         theme_color: "#0f172a",
         background_color: "#ffffff",
         display: "standalone",
@@ -58,16 +57,12 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            return "vendor";
+          }
         },
       },
     },
-  },
-
-  test: {
-    globals: true, // enables global `describe`, `it`, etc.
-    environment: "jsdom",
-    setupFiles: "./src/setupTests.ts",
   },
 });

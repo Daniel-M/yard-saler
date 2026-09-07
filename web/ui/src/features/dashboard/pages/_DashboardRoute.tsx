@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 
-import { DashboardLayout } from "../components/layout/DashboardLayout";
-import { useAuth } from "../context/AuthContext";
-import { DrawerProvider } from "../context/DrawerContext";
+import { DrawerLayout } from "@layouts/DrawerLayout";
+import { useAuth } from "@context/AuthContext";
+import { DrawerProvider } from "@context/DrawerContext";
 import { useUserProfile } from "@hooks/useUserProfile";
 
 export default function DashboardRoute() {
@@ -15,58 +15,12 @@ export default function DashboardRoute() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
-      setToken(null);
-      setLoading(false);
-      navigate("/login", { replace: true, state: { from: location.pathname } });
-      return;
-    }
-
-    let isMounted = true;
-
-    const fetchUserProfile = async () => {
-      try {
-        const profile = await fetchProfile();
-        if (isMounted) {
-          if (profile) {
-            if (!profile.firstName || !profile.lastName) {
-              setLoading(false);
-              navigate("/edit-details", { replace: true });
-              return;
-            }
-            setLoading(false);
-          } else {
-            setToken(null);
-            setLoading(false);
-            navigate("/login", {
-              replace: true,
-              state: { from: location.pathname },
-            });
-          }
-        }
-      } catch (err: any) {
-        console.error("Error fetching user profile:", err);
-        if (isMounted) {
-          setToken(null);
-          setLoading(false);
-          navigate("/login", {
-            replace: true,
-            state: { from: location.pathname },
-          });
-        }
-      }
-    };
-
-    fetchUserProfile();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [token, navigate, location.pathname, setToken, fetchProfile]);
+    fetchProfile().finally(() => setLoading(false));
+  }, []);
 
   const handleLogout = () => {
     setToken(null);
-    navigate("/login", { replace: true });
+    navigate("/login");
   };
 
   if (loading) {
@@ -86,9 +40,9 @@ export default function DashboardRoute() {
 
   return (
     <DrawerProvider>
-      <DashboardLayout user={user} onLogout={handleLogout}>
+      <DrawerLayout onLogout={handleLogout}>
         <Outlet />
-      </DashboardLayout>
+      </DrawerLayout>
     </DrawerProvider>
   );
 }

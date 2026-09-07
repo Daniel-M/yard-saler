@@ -2,7 +2,7 @@ import { apiClient } from "@services/api/client";
 import { useCallback, useState } from "react";
 
 export interface SendMessagePayload {
-  event_code: string;
+  event_code?: string;
   product_id: string;
   message: string;
 }

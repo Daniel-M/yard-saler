@@ -30,7 +30,6 @@ export const useProjectedEarnings = (): UseProjectedEarningsResult => {
         setIsLoading(false);
       }
     }
-    return () => controller.abort();
   }, []);
 
   useEffect(() => {

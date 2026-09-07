@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { apiClient } from "@services/api/client";
-import type { Product } from "@/types/product";
+import type { Product } from "@components/common/ProductCard";
 
 export interface UpdateProductVariables {
   yardSaleId: string;

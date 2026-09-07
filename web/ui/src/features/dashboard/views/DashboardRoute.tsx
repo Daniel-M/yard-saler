@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet, useLocation } from "react-router";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@context/AuthContext';
 import { useUserProfile } from '@hooks/useUserProfile';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { DrawerProvider } from '../context/DrawerContext';
+import { DrawerLayout } from '@layouts/DrawerLayout';
+import { DrawerProvider } from '@context/DrawerContext';
 
 export default function DashboardRoute() {
   const { token, setToken, user } = useAuth();
@@ -76,9 +76,9 @@ export default function DashboardRoute() {
 
   return (
     <DrawerProvider>
-      <DashboardLayout user={user} onLogout={handleLogout}>
+      <DrawerLayout onLogout={handleLogout}>
         <Outlet />
-      </DashboardLayout>
+      </DrawerLayout>
     </DrawerProvider>
   );
 }

@@ -2,7 +2,7 @@ import { ArrowLeft, CheckCircle, Mail } from "lucide-react";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useForgotPassword } from "../hooks/useForgotPassword";
+import { useForgotPassword } from "@features/auth/hooks/useForgotPassword";
 
 export interface ForgotPasswordViewProps {
   onBackToLogin: () => void;
