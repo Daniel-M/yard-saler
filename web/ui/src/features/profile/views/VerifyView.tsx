@@ -35,7 +35,6 @@ export const VerifyView: React.FC<VerifyViewProps> = ({
   });
 
   const handleExploreAsGuest = () => {
-    localStorage.setItem("user_status", "UNVERIFIED");
     navigate("/dashboard");
   };
 

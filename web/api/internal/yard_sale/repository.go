@@ -16,4 +16,8 @@ type Repository interface {
 	FindProductByID(ctx context.Context, id string) (*domain.Product, error)
 	FindProductsByYardSaleID(ctx context.Context, yardSaleID string) ([]*domain.Product, error)
 	FindProductByCodes(ctx context.Context, eventCode, productCode string) (*domain.Product, error)
+	UpdateProduct(ctx context.Context, prod *domain.Product) error
+
+	GetProjectedEarnings(ctx context.Context, userID string) (float64, float64, error)
+
 }

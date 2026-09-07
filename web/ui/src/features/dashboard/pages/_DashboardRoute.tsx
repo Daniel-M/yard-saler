@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, Outlet, useLocation } from "react-router";
-import { useAuth } from '../context/AuthContext';
-import { useUserProfile } from '../features/auth/hooks/useUserProfile';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { DrawerProvider } from '../context/DrawerContext';
+import React, { useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router";
+
+import { DashboardLayout } from "../components/layout/DashboardLayout";
+import { useAuth } from "../context/AuthContext";
+import { DrawerProvider } from "../context/DrawerContext";
+import { useUserProfile } from "@hooks/useUserProfile";
 
 export default function DashboardRoute() {
   const { token, setToken, user } = useAuth();
@@ -17,7 +18,7 @@ export default function DashboardRoute() {
     if (!token) {
       setToken(null);
       setLoading(false);
-      navigate('/login', { replace: true, state: { from: location.pathname } });
+      navigate("/login", { replace: true, state: { from: location.pathname } });
       return;
     }
 
@@ -30,22 +31,28 @@ export default function DashboardRoute() {
           if (profile) {
             if (!profile.firstName || !profile.lastName) {
               setLoading(false);
-              navigate('/edit-details', { replace: true });
+              navigate("/edit-details", { replace: true });
               return;
             }
             setLoading(false);
           } else {
             setToken(null);
             setLoading(false);
-            navigate('/login', { replace: true, state: { from: location.pathname } });
+            navigate("/login", {
+              replace: true,
+              state: { from: location.pathname },
+            });
           }
         }
       } catch (err: any) {
-        console.error('Error fetching user profile:', err);
+        console.error("Error fetching user profile:", err);
         if (isMounted) {
           setToken(null);
           setLoading(false);
-          navigate('/login', { replace: true, state: { from: location.pathname } });
+          navigate("/login", {
+            replace: true,
+            state: { from: location.pathname },
+          });
         }
       }
     };
@@ -59,12 +66,15 @@ export default function DashboardRoute() {
 
   const handleLogout = () => {
     setToken(null);
-    navigate('/login', { replace: true });
+    navigate("/login", { replace: true });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center" data-testid="loading-skeleton">
+      <div
+        className="min-h-screen bg-slate-950 flex items-center justify-center"
+        data-testid="loading-skeleton"
+      >
         <div className="h-6 w-6 border-2 border-slate-700 border-t-slate-200 rounded-full animate-spin" />
       </div>
     );

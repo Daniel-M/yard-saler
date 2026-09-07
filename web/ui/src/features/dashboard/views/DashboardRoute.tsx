@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet, useLocation } from "react-router";
 import { useAuth } from '../context/AuthContext';
-import { useUserProfile } from '../features/auth/hooks/useUserProfile';
+import { useUserProfile } from '@hooks/useUserProfile';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { DrawerProvider } from '../context/DrawerContext';
 

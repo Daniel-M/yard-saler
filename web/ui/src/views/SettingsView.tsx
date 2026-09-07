@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@context/AuthContext";
-import { useUserProfile } from "@features/auth/hooks/useUserProfile";
+import { useUserProfile } from "@hooks/useUserProfile";
 import { apiClient } from "@services/api/client";
 
 export const SettingsView: React.FC = () => {

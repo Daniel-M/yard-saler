@@ -155,7 +155,6 @@ describe('VerifyView Component', () => {
       expect(screen.getByTestId('success-state')).toBeInTheDocument();
     });
 
-    expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'VERIFIED_PENDING_DETAILS');
     expect(localStorage.setItem).toHaveBeenCalledWith('token', 'MOCK_TOKEN');
     expect(mockSetToken).toHaveBeenCalledWith('MOCK_TOKEN');
     expect(onVerificationSuccess).toHaveBeenCalledWith('MOCK_TOKEN', mockUser);
@@ -178,7 +177,6 @@ describe('VerifyView Component', () => {
     const guestBtn = screen.getByRole('button', { name: 'Explore as Guest (Restricted)' });
     await user.click(guestBtn);
 
-    expect(localStorage.setItem).toHaveBeenCalledWith('user_status', 'UNVERIFIED');
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
   });
 

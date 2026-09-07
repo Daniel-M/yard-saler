@@ -14,8 +14,9 @@ type SecurityConfig struct {
 }
 
 type AuthConfig struct {
-	PasetoKey string        `mapstructure:"paseto_key"`
-	TokenTTL  time.Duration `mapstructure:"token_ttl"`
+	PasetoKey      string        `mapstructure:"paseto_key"`
+	TokenTTL       time.Duration `mapstructure:"token_ttl"`
+	GoogleClientID string        `mapstructure:"google_client_id"`
 }
 
 type ServerConfig struct {
@@ -69,6 +70,10 @@ func LoadConfig(path string) (*Config, error) {
 	var config Config
 	if err := v.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	if googleClientID := os.Getenv("GOOGLE_CLIENT_ID"); googleClientID != "" {
+		config.Auth.GoogleClientID = googleClientID
 	}
 
 	if envVal := os.Getenv("APP_CORS_ALLOWED_ORIGINS"); envVal != "" {

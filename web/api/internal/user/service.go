@@ -2,11 +2,13 @@ package user
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -14,6 +16,8 @@ import (
 	"github.com/Daniel-M/ys-api/internal/dto"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/api/oauth2/v2"
+	"google.golang.org/api/option"
 )
 
 var (
@@ -27,14 +31,78 @@ var (
 	ErrUserAlreadyExists     = errors.New("user already exists")
 )
 
+// TokenVerifier defines the interface for verifying Google ID Tokens.
+type TokenVerifier interface {
+	Verify(ctx context.Context, token string) (*GoogleClaims, error)
+}
+
+// GoogleTokenVerifier implements TokenVerifier using the Google OAuth2 service.
+type GoogleTokenVerifier struct {
+	clientID string
+}
+
+// NewGoogleTokenVerifier creates a new GoogleTokenVerifier.
+func NewGoogleTokenVerifier(clientID string) *GoogleTokenVerifier {
+	return &GoogleTokenVerifier{clientID: clientID}
+}
+
+// Verify verifies the ID token using Google oauth2 Tokeninfo API service and validates the audience.
+func (v *GoogleTokenVerifier) Verify(ctx context.Context, token string) (*GoogleClaims, error) {
+	service, err := oauth2.NewService(ctx, option.WithoutAuthentication())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create oauth2 service: %w", err)
+	}
+
+	tokenInfo, err := service.Tokeninfo().IdToken(token).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify google token: %w", err)
+	}
+
+	if tokenInfo.Audience != v.clientID {
+		return nil, fmt.Errorf("audience mismatch: expected %s, got %s", v.clientID, tokenInfo.Audience)
+	}
+
+	claims, err := parseGoogleToken(token)
+	if err != nil {
+		// Fallback to tokenInfo fields if JWT parsing fails
+		claims = &GoogleClaims{
+			Email: tokenInfo.Email,
+			Sub:   tokenInfo.UserId,
+		}
+	}
+
+	if tokenInfo.Email != "" {
+		claims.Email = tokenInfo.Email
+	}
+	if tokenInfo.UserId != "" {
+		claims.Sub = tokenInfo.UserId
+	}
+
+	return claims, nil
+}
+
+// MockTokenVerifier is a mock implementation of TokenVerifier for testing.
+type MockTokenVerifier struct {
+	VerifyFunc func(ctx context.Context, token string) (*GoogleClaims, error)
+}
+
+// Verify implements TokenVerifier.
+func (m *MockTokenVerifier) Verify(ctx context.Context, token string) (*GoogleClaims, error) {
+	if m.VerifyFunc != nil {
+		return m.VerifyFunc(ctx, token)
+	}
+	return parseGoogleToken(token)
+}
+
 // UserService coordinates operations on User domain objects.
 type UserService struct {
-	repo UserRepository
+	repo          UserRepository
+	tokenVerifier TokenVerifier
 }
 
 // NewUserService creates a new UserService instance.
-func NewUserService(repo UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo UserRepository, verifier TokenVerifier) *UserService {
+	return &UserService{repo: repo, tokenVerifier: verifier}
 }
 
 // GetUser retrieves a user by ID.
@@ -156,6 +224,37 @@ func (s *UserService) EditUserDetails(ctx context.Context, userID string, d dto.
 	return s.repo.Update(ctx, u)
 }
 
+// ForgotPassword initiates password recovery by generating a reset code.
+func (s *UserService) ForgotPassword(ctx context.Context, email string) error {
+	u, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return fmt.Errorf("failed to look up user by email: %w", err)
+	}
+	if u == nil {
+		return ErrUserNotFound
+	}
+
+	// Generate secure random 6-digit password reset code
+	max := big.NewInt(1000000)
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return fmt.Errorf("failed to generate reset code: %w", err)
+	}
+	code := fmt.Sprintf("%06d", n.Int64())
+
+	expiry := time.Now().Add(1 * time.Hour) // Reset code valid for 1 hour
+	u.PasswordResetCode = &code
+	u.PasswordResetExpiresAt = &expiry
+	u.UpdatedAt = time.Now()
+
+	_, err = s.repo.Update(ctx, u)
+	if err != nil {
+		return fmt.Errorf("failed to update user with reset code: %w", err)
+	}
+
+	return nil
+}
+
 // PasswordReset updates a user's password using a valid reset code.
 func (s *UserService) PasswordReset(ctx context.Context, d dto.UserPasswordResetDTO) error {
 	u, err := s.repo.FindByPasswordResetCode(ctx, d.PasswordChangeCode)
@@ -267,7 +366,7 @@ func (s *UserService) LoginUser(ctx context.Context, email, password string) (*d
 
 // OAuthGoogle handles Google OAuth sign-in/up by verifying the credential and associating/creating the user profile and identities.
 func (s *UserService) OAuthGoogle(ctx context.Context, credential string) (*domain.User, error) {
-	claims, err := parseGoogleToken(credential)
+	claims, err := s.tokenVerifier.Verify(ctx, credential)
 	if err != nil {
 		return nil, fmt.Errorf("invalid google credential: %w", err)
 	}

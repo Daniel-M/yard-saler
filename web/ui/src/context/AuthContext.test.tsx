@@ -9,7 +9,7 @@ describe('AuthContext', () => {
   });
 
   it('initializes token from localStorage', () => {
-    localStorage.setItem('paseto_token', 'initial-token');
+    localStorage.setItem('token', 'initial-token');
     
     const { result } = renderHook(() => useAuth(), {
       wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
@@ -28,11 +28,11 @@ describe('AuthContext', () => {
     });
 
     expect(result.current.token).toBe('new-token');
-    expect(localStorage.getItem('paseto_token')).toBe('new-token');
+    expect(localStorage.getItem('token')).toBe('new-token');
   });
 
   it('removes token from localStorage when setToken is called with null', () => {
-    localStorage.setItem('paseto_token', 'existing-token');
+    localStorage.setItem('token', 'existing-token');
     
     const { result } = renderHook(() => useAuth(), {
       wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
@@ -43,7 +43,7 @@ describe('AuthContext', () => {
     });
 
     expect(result.current.token).toBeNull();
-    expect(localStorage.getItem('paseto_token')).toBeNull();
+    expect(localStorage.getItem('token')).toBeNull();
   });
 
   it('initializes user to null and updates via setUser', () => {
@@ -68,7 +68,7 @@ describe('AuthContext', () => {
   });
 
   it('resets user to null when token becomes null or empty', () => {
-    localStorage.setItem('paseto_token', 'existing-token');
+    localStorage.setItem('token', 'existing-token');
     const { result } = renderHook(() => useAuth(), {
       wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
     });

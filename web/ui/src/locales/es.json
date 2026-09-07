@@ -8,8 +8,25 @@
       "home": "Inicio",
       "listings": "Anuncios",
       "about": "Acerca de"
+    },
+    "coffee": {
+      "buttonAriaLabel": "Invítame un café",
+      "title": "Apoya al desarrollador ☕",
+      "qrAlt": "Código QR de Bre-b para donaciones",
+      "thankYou": "¡Gracias por tu apoyo! Cada café ayuda a mantener esta aplicación. 🙏",
+      "fundingLabel": "Financiación mensual",
+      "funded": "financiado"
+    },
+    "contact": {
+      "buttonAriaLabel": "Contactar al desarrollador",
+      "title": "Contactar al Desarrollador",
+      "subtitle": "¿Tienes comentarios o preguntas? ¡Escríbeme!",
+      "telegram": "Telegram – @danielmejia55",
+      "whatsapp": "WhatsApp – danielmejia55",
+      "email": "Correo – danielmejia55@gmail.com"
     }
   },
+
   "footer": {
     "copyright": "© {{year}} Whale Shark. Todos los derechos reservados.",
     "links": {
@@ -19,6 +36,7 @@
     }
   },
   "common": {
+    "loading": "Cargando...",
     "theme": {
       "toggleLabel": "Cambiar tema de color",
       "darkMode": "Modo oscuro",
@@ -61,7 +79,8 @@
       "invalidEmail": "Por favor, ingresa un correo electrónico válido.",
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
       "emailRequired": "El correo electrónico es requerido.",
-      "passwordRequired": "La contraseña es requerida."
+      "passwordRequired": "La contraseña es requerida.",
+      "googleBlocked": "El inicio de sesión de Google no está disponible. Por favor verifica tu conexión o desactiva los bloqueadores de anuncios."
     },
     "login": {
       "error": {
@@ -151,9 +170,32 @@
     }
   },
   "dashboard": {
+    "title": "Tablero",
+    "myYardSales": "Mis ventas de garaje",
+    "myYardSalesSubtitle": "Administra y revisa tus eventos y anuncios de ventas de garaje",
+    "quickStats": {
+      "activeListings": "Publicaciones Activas",
+      "unreadMessages": "Mensajes sin Leer",
+      "quickActions": "Acciones Rápidas"
+    },
+    "actions": {
+      "createListing": "Crear Venta de Garaje",
+      "viewMessages": "Ver Mensajes",
+      "explore": "Explorar Ventas"
+    },
+    "tabs": {
+      "current": "Eventos actuales ({{count}})",
+      "past": "Eventos pasados ({{count}})"
+    },
+    "noActiveEvents": "No tienes eventos de venta de garaje activos programados en este momento.",
+    "noPastEvents": "No tienes registro de eventos de venta de garaje pasados.",
+    "getStarted": "Comenzar",
+    "viewEvent": "Ver evento",
+    "loadFailedError": "Error al cargar tus ventas de garaje",
     "nav": {
       "home": "Tablero",
       "myListings": "Mis Anuncios",
+      "messages": "Mensajes",
       "explore": "Explorar",
       "settings": "Configuración",
       "logout": "Cerrar sesión"
@@ -161,12 +203,17 @@
     "offlineBanner": "Actualmente estás desconectado. Las actualizaciones de los anuncios pueden retrasarse.",
     "stubs": {
       "settingsComingSoon": "Próximamente: Configuración y ajustes",
-      "profileComingSoon": "Próximamente: Administración del perfil"
+      "profileComingSoon": "Próximamente: Administración del perfil",
+      "notificationsComingSoon": "Próximamente: Notificaciones y Registro de Actividad"
     },
     "drawer": {
       "ariaLabel": "Menú de navegación",
       "closeAriaLabel": "Cerrar menú de navegación",
       "openAriaLabel": "Abrir menú de navegación"
+    },
+    "earnings": {
+      "title": "Ganancias proyectadas",
+      "ofTarget": "de {{target}} meta esperada"
     }
   },
   "yard_sale": {
@@ -275,5 +322,28 @@
       "listing_product": "Listando producto...",
       "upload_failed": "Error de carga: {{statusText}}"
     }
+  },
+  "messaging": {
+    "title": "Mensajes",
+    "no_conversations": "No tienes conversaciones aún.",
+    "select_conversation": "Selecciona una conversación para empezar a chatear",
+    "placeholder": "Escribe un mensaje...",
+    "send": "Enviar",
+    "back_to_inbox": "Volver a Recibidos",
+    "product_label": "Producto: ",
+    "unread_messages": "Mensajes no leídos",
+    "sent": "Enviado",
+    "read": "Leído"
+  },
+  "explore": {
+    "title": "Explorar ventas de garaje locales",
+    "subtitle": "Encuentra ventas de garaje y artículos en tu ciudad",
+    "yourCity": "Mostrando eventos en {{city}}",
+    "searchPlaceholder": "Buscar por título, descripción o dirección...",
+    "noListings": "No se encontraron ventas de garaje en tu ciudad: {{city}}.",
+    "noListingsSubtitle": "Intenta ajustar tus criterios de búsqueda o vuelve a consultar más tarde.",
+    "noProfileLocationTitle": "Ubicación no configurada",
+    "noProfileLocation": "Por favor establece tu ubicación en configuración para ver ventas de garaje cerca de ti.",
+    "loadFailed": "Error al cargar las publicaciones de exploración"
   }
 }

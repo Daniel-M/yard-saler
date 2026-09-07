@@ -23,6 +23,8 @@ export const ProductDetailView: React.FC = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [isOwner, setIsOwner] = useState(false);
+  const { user } = useAuth();
 
   // Hooks
   const { cartItems, addToCart, updateQuantity, removeFromCart, isLoading: isCartLoading } = useCart();
@@ -48,6 +50,19 @@ export const ProductDetailView: React.FC = () => {
       fetchProduct();
     }
   }, [product_code, event_code, t]);
+
+  useEffect(() => {
+    const checkOwnership = async () => {
+      if (!user || !product || !event_code) return;
+      try {
+        const ysData = await apiClient<{ user_id: string }>(`/api/public/ys/e/${event_code}`);
+        setIsOwner(ysData && ysData.user_id === user.id);
+      } catch (err) {
+        console.error("Failed to check yard sale ownership", err);
+      }
+    };
+    checkOwnership();
+  }, [user, product, event_code]);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToastMessage(message);
@@ -76,6 +91,23 @@ export const ProductDetailView: React.FC = () => {
       <div className="max-w-4xl mx-auto py-8 px-4 text-center">
         <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded p-4 mb-4">
           {error || t("yard_sale.product.not_found")}
+        </div>
+        <Link
+          to={`/ys/e/${event_code}`}
+          className="inline-flex min-h-[48px] items-center gap-2 text-accent-blue hover:text-accent-blue-hover font-semibold transition"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t("yard_sale.product.back_to_event")}
+        </Link>
+      </div>
+    );
+  }
+
+  if (product && product.status === "sold" && !isOwner) {
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4 text-center">
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded p-4 mb-4">
+          {t("yard_sale.product.not_available_sold", "This product is sold and no longer available.")}
         </div>
         <Link
           to={`/ys/e/${event_code}`}

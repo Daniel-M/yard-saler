@@ -1,10 +1,16 @@
 import { LanguageToggle } from "@components/LanguageToggle";
 import { ThemeToggle } from "@components/ThemeToggle";
-import { type UserProfile, useAuth } from "@context/AuthContext";
-import { Download, Layers, LogOut, Menu, X } from "lucide-react";
-import React, { useState } from "react";
+import { useAuth } from "@context/AuthContext";
+import type { UserProfile } from "@context/AuthContext";
+import { Bell, Download, Layers, LogOut, Menu, X } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionStatus } from "@components/layout/ConnectionStatus";
+import { useNotifications } from "@hooks/useNotifications";
+import { useNavigate } from "react-router";
+import { CoffeeButton } from "@features/header/components/CoffeeButton";
+import { ContactButton } from "@features/header/components/ContactButton";
+
 
 export interface HeaderProps {
   installPrompt?: any;
@@ -17,6 +23,7 @@ export interface HeaderProps {
   showHamburger?: boolean;
   hideNavLinks?: boolean;
   hideThemeLanguageToggles?: boolean;
+  onNotificationClick?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,11 +36,52 @@ export const Header: React.FC<HeaderProps> = ({
   showHamburger = false,
   hideNavLinks = false,
   hideThemeLanguageToggles = false,
+  onNotificationClick,
 }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useAuth();
   const { isVerified } = user || { isVerified: false };
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const handleNotificationItemClick = (n: any) => {
+    if (!n.is_read) {
+      markAsRead(n.id);
+    }
+    setIsDropdownOpen(false);
+    if (
+      n.type === "message" ||
+      n.type === "chat" ||
+      n.type === "new_message" ||
+      n.title?.toLowerCase().includes("message") ||
+      n.content?.toLowerCase().includes("message")
+    ) {
+      navigate(`/messages?thread_id=${n.reference_id}`);
+    }
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        mobileDropdownRef.current &&
+        !mobileDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [isDropdownOpen]);
 
   const tabs = [
     { id: "home", label: t("header.nav.home") },
@@ -61,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onHamburgerClick}
               aria-label={t("dashboard.drawer.openAriaLabel")}
-              className="lg:hidden min-h-[48px] min-w-[48px] flex items-center justify-center text-content-secondary hover:text-content-primary hover:bg-surface-elevated rounded-lg bg-surface border border-border-subtle transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue shadow-md cursor-pointer mr-1"
+              className="flex lg:hidden min-h-[48px] min-w-[48px] items-center justify-center text-content-secondary hover:text-content-primary hover:bg-surface-elevated rounded-lg bg-surface border border-border-subtle transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue shadow-md cursor-pointer mr-1"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -120,28 +168,72 @@ export const Header: React.FC<HeaderProps> = ({
             </>
           )}
 
-          {/* User Profile dropdown wrapper */}
+          {/* User Profile dropdown wrapper replaced with notification bell */}
           {user && (
             <div className="flex items-center gap-3 border-l border-border-subtle pl-3">
-              <button
-                onClick={() => alert(t("dashboard.stubs.profileComingSoon"))}
-                className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded text-left cursor-pointer"
-              >
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-surface-elevated text-content-primary flex items-center justify-center font-semibold text-xs border border-border-subtle">
-                    {user.initials}
+              {/* Buy Me a Coffee */}
+              <CoffeeButton />
+              {/* Contact Developer */}
+              <ContactButton />
+
+              <div className="relative" ref={dropdownRef}>
+
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="relative p-1.5 text-content-secondary hover:text-content-primary rounded-lg hover:bg-surface-elevated transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue cursor-pointer"
+                  aria-label={t("dashboard.drawer.notificationsAriaLabel", "Notifications")}
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center border border-[var(--surface)]">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-[var(--surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl z-50 py-2">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
+                      <span className="font-bold text-sm text-[var(--content-primary)]">
+                        {t("notifications.title", "Notifications")}
+                      </span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => markAllAsRead()}
+                          className="text-xs text-cyan-400 hover:text-cyan-300 font-medium"
+                        >
+                          {t("notifications.markAllRead", "Mark all as read")}
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border-subtle)]">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-[var(--content-secondary)]">
+                          {t("notifications.empty", "No notifications")}
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => handleNotificationItemClick(n)}
+                            className={`px-4 py-3 text-left hover:bg-[var(--surface-elevated)] transition-colors duration-150 cursor-pointer flex gap-2 ${
+                              !n.is_read ? "bg-cyan-600/5 font-medium" : ""
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-[var(--content-primary)] truncate">{n.title}</p>
+                              <p className="text-xs text-[var(--content-secondary)] mt-0.5 line-clamp-2">{n.content}</p>
+                              <span className="text-[9px] text-[var(--content-secondary)] block mt-1">
+                                {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            {!n.is_read && <span className="h-2 w-2 rounded-full bg-cyan-500 mt-1.5 shrink-0" />}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
-                <span className="hidden lg:inline text-sm font-medium text-content-primary truncate max-w-[100px]">
-                  {user.displayName}
-                </span>
-              </button>
+              </div>
 
               {onLogout && (
                 <button
@@ -177,23 +269,71 @@ export const Header: React.FC<HeaderProps> = ({
             </>
           )}
 
-          {/* User Profile and logout on mobile if user exists */}
+          {/* User Profile and logout on mobile if user exists - Replaced Profile button with Notification Bell */}
           {user && (
-            <>
-              <button
-                onClick={() => alert(t("dashboard.stubs.profileComingSoon"))}
-                className="h-8 w-8 rounded-full bg-surface-elevated text-content-primary flex items-center justify-center font-semibold text-xs border border-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue cursor-pointer"
-              >
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  user.initials
+            <div className="flex items-center gap-2">
+              {/* Buy Me a Coffee */}
+              <CoffeeButton />
+              {/* Contact Developer */}
+              <ContactButton />
+              <div className="relative" ref={mobileDropdownRef}>
+
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="relative p-1.5 text-content-secondary hover:text-content-primary rounded-lg hover:bg-surface-elevated transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue cursor-pointer"
+                  aria-label={t("dashboard.drawer.notificationsAriaLabel", "Notifications")}
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full text-[10px] font-bold px-1.5 min-w-[18px] h-[18px] flex items-center justify-center border border-[var(--surface)]">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-72 bg-[var(--surface)] border border-[var(--border-subtle)] rounded-xl shadow-xl z-50 py-2">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
+                      <span className="font-bold text-sm text-[var(--content-primary)]">
+                        {t("notifications.title", "Notifications")}
+                      </span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => markAllAsRead()}
+                          className="text-xs text-cyan-400 hover:text-cyan-300 font-medium"
+                        >
+                          {t("notifications.markAllRead", "Mark all as read")}
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border-subtle)]">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-6 text-center text-sm text-[var(--content-secondary)]">
+                          {t("notifications.empty", "No notifications")}
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            onClick={() => handleNotificationItemClick(n)}
+                            className={`px-4 py-3 text-left hover:bg-[var(--surface-elevated)] transition-colors duration-150 cursor-pointer flex gap-2 ${
+                              !n.is_read ? "bg-cyan-600/5 font-medium" : ""
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-[var(--content-primary)] truncate">{n.title}</p>
+                              <p className="text-xs text-[var(--content-secondary)] mt-0.5 line-clamp-2">{n.content}</p>
+                              <span className="text-[9px] text-[var(--content-secondary)] block mt-1">
+                                {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            {!n.is_read && <span className="h-2 w-2 rounded-full bg-cyan-500 mt-1.5 shrink-0" />}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
               {onLogout && (
                 <button
                   onClick={onLogout}
@@ -203,7 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <LogOut className="h-5 w-5" />
                 </button>
               )}
-            </>
+            </div>
           )}
 
           {!hideNavLinks && !showHamburger && (

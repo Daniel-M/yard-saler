@@ -253,3 +253,51 @@ func (r *SqliteRepository) FindProductByCodes(ctx context.Context, eventCode, pr
 	}
 	return &prod, nil
 }
+
+func (r *SqliteRepository) UpdateProduct(ctx context.Context, prod *domain.Product) error {
+	imagesJSON, err := json.Marshal(prod.Images)
+	if err != nil {
+		return fmt.Errorf("failed to marshal images: %w", err)
+	}
+
+	query := `
+		UPDATE products
+		SET yard_sale_id = ?, name = ?, description = ?, price = ?, condition = ?, status = ?, images = ?, updated_at = ?, product_code = ?
+		WHERE id = ?
+	`
+	_, err = r.db.ExecContext(
+		ctx, query,
+		prod.YardSaleID, prod.Name, prod.Description, prod.Price, prod.Condition, prod.Status, string(imagesJSON), prod.UpdatedAt, prod.ProductCode, prod.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update product: %w", err)
+	}
+	return nil
+}
+
+// GetProjectedEarnings returns current earnings from sold products and total projected earnings from all products for a user.
+func (r *SqliteRepository) GetProjectedEarnings(ctx context.Context, userID string) (float64, float64, error) {
+	const querySold = `
+		SELECT IFNULL(SUM(p.price), 0) / 100.0
+		FROM products p
+		JOIN yard_sales ys ON p.yard_sale_id = ys.id
+		WHERE ys.user_id = ? AND p.status = 'sold';
+	`
+	const queryTotal = `
+		SELECT IFNULL(SUM(p.price), 0) / 100.0
+		FROM products p
+		JOIN yard_sales ys ON p.yard_sale_id = ys.id
+		WHERE ys.user_id = ?;
+	`
+	var currentSold, projectedSold float64
+	if err := r.db.QueryRowContext(ctx, querySold, userID).Scan(&currentSold); err != nil {
+		return 0, 0, fmt.Errorf("failed to calculate current sold earnings: %w", err)
+	}
+	if err := r.db.QueryRowContext(ctx, queryTotal, userID).Scan(&projectedSold); err != nil {
+		return 0, 0, fmt.Errorf("failed to calculate projected sold earnings: %w", err)
+	}
+	return currentSold, projectedSold, nil
+}
+
+
+

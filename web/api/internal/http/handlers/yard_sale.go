@@ -5,18 +5,46 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/Daniel-M/ys-api/internal/auth"
 	"github.com/Daniel-M/ys-api/internal/dto"
 	"github.com/Daniel-M/ys-api/internal/middleware"
 	"github.com/Daniel-M/ys-api/internal/yard_sale"
 )
 
 type YardSaleHandler struct {
-	service *yard_sale.Service
+	service     *yard_sale.Service
+	tokenIssuer auth.AccessTokenIssuer
 }
 
-func NewYardSaleHandler(service *yard_sale.Service) *YardSaleHandler {
-	return &YardSaleHandler{service: service}
+func NewYardSaleHandler(service *yard_sale.Service, tokenIssuer auth.AccessTokenIssuer) *YardSaleHandler {
+	return &YardSaleHandler{
+		service:     service,
+		tokenIssuer: tokenIssuer,
+	}
+}
+
+func (h *YardSaleHandler) getOptionalUserID(r *http.Request) string {
+	if userID, ok := middleware.GetUserID(r.Context()); ok && userID != "" {
+		return userID
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return ""
+	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		return ""
+	}
+
+	userID, _, err := h.tokenIssuer.ParseAndValidate(parts[1])
+	if err != nil {
+		return ""
+	}
+	return userID
 }
 
 func (h *YardSaleHandler) CreateYardSale(w http.ResponseWriter, r *http.Request) {
@@ -78,9 +106,15 @@ func (h *YardSaleHandler) GetYardSale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productsDTO := make([]dto.ProductDTO, len(prods))
-	for i, p := range prods {
-		productsDTO[i] = dto.ProductDTO{
+	userID := h.getOptionalUserID(r)
+	isOwner := userID != "" && userID == ys.UserID
+
+	productsDTO := make([]dto.ProductDTO, 0, len(prods))
+	for _, p := range prods {
+		if p.Status == "sold" && !isOwner {
+			continue
+		}
+		productsDTO = append(productsDTO, dto.ProductDTO{
 			ID:          p.ID,
 			YardSaleID:  p.YardSaleID,
 			Name:        p.Name,
@@ -92,7 +126,7 @@ func (h *YardSaleHandler) GetYardSale(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:   p.CreatedAt,
 			UpdatedAt:   p.UpdatedAt,
 			ProductCode: p.ProductCode,
-		}
+		})
 	}
 
 	dtoOut := dto.YardSaleDetailDTO{
@@ -131,9 +165,15 @@ func (h *YardSaleHandler) GetPublicYardSaleByEventCode(w http.ResponseWriter, r 
 		return
 	}
 
-	productsDTO := make([]dto.ProductDTO, len(prods))
-	for i, p := range prods {
-		productsDTO[i] = dto.ProductDTO{
+	userID := h.getOptionalUserID(r)
+	isOwner := userID != "" && userID == ys.UserID
+
+	productsDTO := make([]dto.ProductDTO, 0, len(prods))
+	for _, p := range prods {
+		if p.Status == "sold" && !isOwner {
+			continue
+		}
+		productsDTO = append(productsDTO, dto.ProductDTO{
 			ID:          p.ID,
 			YardSaleID:  p.YardSaleID,
 			Name:        p.Name,
@@ -145,7 +185,7 @@ func (h *YardSaleHandler) GetPublicYardSaleByEventCode(w http.ResponseWriter, r 
 			CreatedAt:   p.CreatedAt,
 			UpdatedAt:   p.UpdatedAt,
 			ProductCode: p.ProductCode,
-		}
+		})
 	}
 
 	dtoOut := dto.YardSaleDetailDTO{
@@ -167,6 +207,26 @@ func (h *YardSaleHandler) GetPublicYardSaleByEventCode(w http.ResponseWriter, r 
 	json.NewEncoder(w).Encode(dtoOut)
 }
 
+// GetProjectedEarnings returns the projected earnings and target.
+func (h *YardSaleHandler) GetProjectedEarnings(w http.ResponseWriter, r *http.Request) {
+	// Ensure user is authenticated
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	dtoOut, err := h.service.ProjectedEarnings(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(dtoOut)
+}
+
 func (h *YardSaleHandler) GetPublicProductByCodes(w http.ResponseWriter, r *http.Request) {
 	eventCode := r.PathValue("event_code")
 	productCode := r.PathValue("product_code")
@@ -183,6 +243,15 @@ func (h *YardSaleHandler) GetPublicProductByCodes(w http.ResponseWriter, r *http
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	if prod.Status == "sold" {
+		userID := h.getOptionalUserID(r)
+		ys, _, err := h.service.GetYardSaleDetail(r.Context(), prod.YardSaleID)
+		if err != nil || ys == nil || ys.UserID != userID {
+			http.Error(w, "product not found", http.StatusNotFound)
+			return
+		}
 	}
 
 	dtoOut := dto.ProductDTO{
@@ -358,5 +427,67 @@ func (h *YardSaleHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(dtoOut)
+}
+
+func (h *YardSaleHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok || userID == "" {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	yardSaleID := r.PathValue("id")
+	productID := r.PathValue("product_id")
+	if yardSaleID == "" || productID == "" {
+		http.Error(w, "missing yard sale ID or product ID", http.StatusBadRequest)
+		return
+	}
+
+	var d dto.CreateProductDTO
+	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := d.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	prod, err := h.service.UpdateProduct(r.Context(), userID, yardSaleID, productID, d)
+	if err != nil {
+		if errors.Is(err, yard_sale.ErrYardSaleNotFound) {
+			http.Error(w, "yard sale not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, yard_sale.ErrProductNotFound) {
+			http.Error(w, "product not found", http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, yard_sale.ErrForbidden) {
+			http.Error(w, "forbidden: you do not own this yard sale", http.StatusForbidden)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	dtoOut := dto.ProductDTO{
+		ID:          prod.ID,
+		YardSaleID:  prod.YardSaleID,
+		Name:        prod.Name,
+		Description: prod.Description,
+		Price:       prod.Price,
+		Condition:   prod.Condition,
+		Status:      prod.Status,
+		Images:      prod.Images,
+		CreatedAt:   prod.CreatedAt,
+		UpdatedAt:   prod.UpdatedAt,
+		ProductCode: prod.ProductCode,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(dtoOut)
 }

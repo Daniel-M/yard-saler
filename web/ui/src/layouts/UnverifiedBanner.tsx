@@ -1,7 +1,7 @@
-import { AlertTriangle } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { Banner } from "@components/common/Banner";
 
 export const UnverifiedBanner: React.FC = () => {
   const { t } = useTranslation();
@@ -13,18 +13,21 @@ export const UnverifiedBanner: React.FC = () => {
   }
 
   return (
-    <div
-      className="bg-amber-500/10 border-b border-amber-500/20 text-amber-400 px-4 py-3 text-center text-sm font-semibold flex items-center justify-center gap-2"
-      data-testid="unverified-banner"
-    >
-      <AlertTriangle className="h-4 w-4 shrink-0" />
-      <span>{t("auth.unverifiedBanner.text")}</span>
-      <button
-        onClick={() => navigate("/auth/verify")}
-        className="underline hover:text-amber-300 ml-1 cursor-pointer focus:outline-none"
-      >
-        {t("auth.unverifiedBanner.link")}
-      </button>
-    </div>
+    <Banner
+      variant="warning"
+      className="rounded-none border-x-0 border-t-0 text-center flex justify-center py-3"
+      autoDismiss={false}
+      message={
+        <span className="flex items-center gap-1">
+          <span>{t("auth.unverifiedBanner.text")}</span>
+          <button
+            onClick={() => navigate("/auth/verify")}
+            className="underline hover:text-amber-300 ml-1 cursor-pointer focus:outline-none font-semibold"
+          >
+            {t("auth.unverifiedBanner.link")}
+          </button>
+        </span>
+      }
+    />
   );
 };

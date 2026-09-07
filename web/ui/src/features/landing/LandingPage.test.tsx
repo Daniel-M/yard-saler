@@ -24,6 +24,11 @@ vi.mock('react-i18next', () => ({
   },
 }));
 
+vi.mock('@components/layout/ConnectionStatus', () => ({
+  ConnectionStatus: () => null,
+  default: () => null,
+}));
+
 describe('LandingPage', () => {
   beforeEach(() => {
     i18n.changeLanguage('en');

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "@context/AuthContext";
-import { apiClient } from "@services/api/client";
 import { ProductCard } from "@components/common/ProductCard";
 import type { Product } from "@components/common/ProductCard";
-import { Calendar, MapPin, User, Plus, ArrowLeft } from "lucide-react";
+import { useAuth } from "@context/AuthContext";
+import { apiClient } from "@services/api/client";
+import { ArrowLeft, Calendar, MapPin, Plus, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useParams } from "react-router";
 
 interface YardSaleDetail {
   id: string;
@@ -34,7 +34,9 @@ export const YardSaleDetailView: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const ysData = await apiClient<YardSaleDetail>(`/api/public/ys/e/${event_code}`);
+        const ysData = await apiClient<YardSaleDetail>(
+          `/api/public/ys/e/${event_code}`,
+        );
         setYardSale(ysData);
       } catch (err: any) {
         setError(err?.message || t("yard_sale.detail.detail_error"));
@@ -73,7 +75,7 @@ export const YardSaleDetailView: React.FC = () => {
     );
   }
 
-  const isOwner = user && yardSale.user_id === user.id;
+  const isOwner = user && yardSale.user_id === user.id ? true : false;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString();
@@ -87,7 +89,8 @@ export const YardSaleDetailView: React.FC = () => {
     if (now >= start && now <= end) {
       return {
         label: t("yard_sale.detail.status.now"),
-        style: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+        style:
+          "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
       };
     } else if (now < start) {
       return {
@@ -97,7 +100,8 @@ export const YardSaleDetailView: React.FC = () => {
     } else {
       return {
         label: t("yard_sale.detail.status.completed"),
-        style: "bg-surface-elevated text-content-secondary border border-border-subtle",
+        style:
+          "bg-surface-elevated text-content-secondary border border-border-subtle",
       };
     }
   };
@@ -112,7 +116,9 @@ export const YardSaleDetailView: React.FC = () => {
           className="inline-flex min-h-[48px] items-center gap-2 text-content-secondary hover:text-content-primary font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded p-1"
         >
           <ArrowLeft className="h-4 w-4" />
-          {user ? t("yard_sale.product.back_to_dashboard") : t("yard_sale.product.back_to_home")}
+          {user
+            ? t("yard_sale.product.back_to_dashboard")
+            : t("yard_sale.product.back_to_home")}
         </Link>
       </div>
 
@@ -120,13 +126,19 @@ export const YardSaleDetailView: React.FC = () => {
         <div className="flex justify-between items-start flex-wrap gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded tracking-wide ${status.style}`}>
+              <span
+                className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded tracking-wide ${status.style}`}
+              >
                 {status.label}
               </span>
             </div>
-            <h2 className="text-3xl font-extrabold text-content-primary">{yardSale.title}</h2>
+            <h2 className="text-3xl font-extrabold text-content-primary">
+              {yardSale.title}
+            </h2>
             {yardSale.description && (
-              <p className="text-content-secondary leading-relaxed max-w-3xl">{yardSale.description}</p>
+              <p className="text-content-secondary leading-relaxed max-w-3xl">
+                {yardSale.description}
+              </p>
             )}
           </div>
           {isOwner && (
@@ -146,8 +158,13 @@ export const YardSaleDetailView: React.FC = () => {
               <Calendar className="h-5 w-5 text-accent-blue shrink-0" />
             </div>
             <div className="text-sm">
-              <span className="block font-semibold text-content-secondary">{t("yard_sale.detail.schedule")}</span>
-              <span className="text-content-primary">{formatDate(yardSale.start_date)} - {formatDate(yardSale.end_date)}</span>
+              <span className="block font-semibold text-content-secondary">
+                {t("yard_sale.detail.schedule")}
+              </span>
+              <span className="text-content-primary">
+                {formatDate(yardSale.start_date)} -{" "}
+                {formatDate(yardSale.end_date)}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -155,7 +172,9 @@ export const YardSaleDetailView: React.FC = () => {
               <MapPin className="h-5 w-5 text-accent-blue shrink-0" />
             </div>
             <div className="text-sm">
-              <span className="block font-semibold text-content-secondary">{t("yard_sale.detail.location")}</span>
+              <span className="block font-semibold text-content-secondary">
+                {t("yard_sale.detail.location")}
+              </span>
               <span className="text-content-primary">{yardSale.location}</span>
             </div>
           </div>
@@ -164,8 +183,12 @@ export const YardSaleDetailView: React.FC = () => {
               <User className="h-5 w-5 text-accent-blue shrink-0" />
             </div>
             <div className="text-sm">
-              <span className="block font-semibold text-content-secondary">{t("yard_sale.detail.host_id")}</span>
-              <span className="truncate text-content-primary font-mono">{yardSale.user_id}</span>
+              <span className="block font-semibold text-content-secondary">
+                {t("yard_sale.detail.host_id")}
+              </span>
+              <span className="truncate text-content-primary font-mono">
+                {yardSale.user_id}
+              </span>
             </div>
           </div>
         </div>
@@ -180,7 +203,9 @@ export const YardSaleDetailView: React.FC = () => {
         </h3>
         {!yardSale.products || yardSale.products.length === 0 ? (
           <div className="bg-surface border border-border-subtle rounded-2xl shadow-xl p-12 text-center text-content-muted max-w-md mx-auto">
-            <p className="font-semibold text-content-secondary">{t("yard_sale.detail.noProducts")}</p>
+            <p className="font-semibold text-content-secondary">
+              {t("yard_sale.detail.noProducts")}
+            </p>
             {isOwner && (
               <Link
                 to={`/ys/e/${event_code || yardSale.id}/products/new`}
@@ -192,16 +217,19 @@ export const YardSaleDetailView: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {yardSale.products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={{
-                  ...product,
-                  product_code: product.id,
-                }}
-                eventCode={event_code || yardSale.id}
-              />
-            ))}
+            {yardSale.products
+              .filter((product) => isOwner || product.status !== "sold")
+              .map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    ...product,
+                    product_code: product.id,
+                  }}
+                  eventCode={event_code || yardSale.id}
+                  isOwner={isOwner}
+                />
+              ))}
           </div>
         )}
       </div>

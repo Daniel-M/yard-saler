@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { VerifyView } from "../views/VerifyView";
-import { useVerificationGuard } from "../hooks/useVerificationGuard";
+import { useVerificationGuard } from "@hooks/useVerificationGuard";
 import type { LoggedUserDTO } from "@type/auth.types";
 
 export default function VerifyPage() {

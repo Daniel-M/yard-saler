@@ -148,6 +148,34 @@ func (h *UserHandler) EditDetails(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(updated.ToDTO())
 }
 
+// ForgotPassword handles POST /user/auth/forgot-password
+func (h *UserHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if input.Email == "" {
+		http.Error(w, "email is required", http.StatusBadRequest)
+		return
+	}
+
+	err := h.service.ForgotPassword(r.Context(), input.Email)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // PasswordReset handles POST /user/password-reset
 func (h *UserHandler) PasswordReset(w http.ResponseWriter, r *http.Request) {
 	var input dto.UserPasswordResetDTO

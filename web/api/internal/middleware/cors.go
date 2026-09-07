@@ -7,7 +7,11 @@ import (
 // CORS returns a middleware that handles Cross-Origin Resource Sharing.
 func CORS(allowedOrigins []string) Middleware {
 	originsMap := make(map[string]bool)
+	allowAll := false
 	for _, origin := range allowedOrigins {
+		if origin == "*" {
+			allowAll = true
+		}
 		originsMap[origin] = true
 	}
 
@@ -15,7 +19,7 @@ func CORS(allowedOrigins []string) Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 			if origin != "" {
-				if originsMap[origin] {
+				if allowAll || originsMap[origin] {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 					w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 					w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")

@@ -1,67 +1,13 @@
 import { PasswordInput } from "@components/PasswordInput";
 import { useLogin } from "@features/auth/hooks/useLogin";
 import { usePreRegister } from "@features/auth/hooks/usePreRegister";
+import { useOAuthGoogle } from "@features/auth/hooks/useOAuthGoogle";
+import { GoogleOAuthButton } from "../components/GoogleOAuthButton";
 import type { UserLoginResponseDTO } from "@type/auth.types";
 import { Loader2, Lock, LogIn, Mail, UserPlus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-
-// ==========================================
-// 1. Reusable Google OAuth Button
-// ==========================================
-
-export interface GoogleOAuthButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  isLoading?: boolean;
-  text: string;
-}
-
-export function GoogleOAuthButton({
-  isLoading = false,
-  text,
-  className = "",
-  disabled,
-  ...props
-}: GoogleOAuthButtonProps) {
-  return (
-    <button
-      type="button"
-      disabled={isLoading || disabled}
-      className={`w-full flex items-center justify-center gap-3 bg-surface-elevated hover:bg-surface disabled:opacity-50 text-content-primary border border-border-subtle hover:border-border-interactive/50 font-semibold py-2.5 px-4 rounded-xl text-sm transition-all duration-150 shadow-sm cursor-pointer min-h-[48px] ${className}`}
-      {...props}
-    >
-      <svg
-        className="h-4.5 w-4.5 shrink-0"
-        viewBox="0 0 24 24"
-        width="24"
-        height="24"
-        aria-hidden="true"
-      >
-        <path
-          d="M21.35 11.1H12v2.7h5.38c-.24 1.28-.96 2.37-2.04 3.1v2.58h3.3c1.93-1.78 3.04-4.4 3.04-7.48 0-.61-.06-1.2-.16-1.72z"
-          fill="#4285F4"
-        />
-        <path
-          d="M12 20.6c2.43 0 4.47-.8 5.96-2.2l-3.3-2.58c-.92.61-2.1.98-3.46.98-2.35 0-4.34-1.59-5.05-3.72H2.74v2.66c1.48 2.94 4.52 4.86 8.01 4.86z"
-          fill="#34A853"
-        />
-        <path
-          d="M6.95 13.08a5.53 5.53 0 0 1 0-3.36V7.06H2.74a9.9 9.9 0 0 0 0 8.68l4.21-2.66z"
-          fill="#FBBC05"
-        />
-        <path
-          d="M12 6.12c1.32 0 2.51.45 3.44 1.35l2.58-2.58C16.46 3.48 14.42 2.6 12 2.6c-3.49 0-6.53 1.92-8.01 4.86L8.2 10.12c0.71-2.13 2.7-3.72 5.05-3.72z"
-          fill="#EA4335"
-        />
-      </svg>
-      <span>{text}</span>
-    </button>
-  );
-}
-
-// ==========================================
-// 2. Types & Form Model
-// ==========================================
 
 interface AuthFormData {
   email: string;
@@ -72,10 +18,6 @@ interface LoginViewProps {
   onLoginSuccess?: (data: UserLoginResponseDTO) => void;
   onForgotPasswordClick?: () => void;
 }
-
-// ==========================================
-// 3. Main Login Component
-// ==========================================
 
 export default function LoginView({
   onLoginSuccess,
@@ -97,10 +39,17 @@ export default function LoginView({
     reset: resetLogin,
   } = useLogin();
 
+  const {
+    mutate: oauthGoogle,
+    isLoading: isOAuthing,
+    error: oauthError,
+    reset: resetOAuth,
+  } = useOAuthGoogle();
+
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const isPending = isPreRegistering || isLoggingIn;
+  const isPending = isPreRegistering || isLoggingIn || isOAuthing;
 
   const {
     register,
@@ -127,14 +76,17 @@ export default function LoginView({
       setApiError(parseErrorMessage(preRegisterError));
     } else if (loginError) {
       setApiError(parseErrorMessage(loginError));
+    } else if (oauthError) {
+      setApiError(parseErrorMessage(oauthError));
     }
-  }, [preRegisterError, loginError]);
+  }, [preRegisterError, loginError, oauthError]);
 
   const handleTabSwitch = (tab: "login" | "signup") => {
     setActiveTab(tab);
     setApiError(null);
     resetPreRegister();
     resetLogin();
+    resetOAuth();
     resetForm();
   };
 
@@ -154,11 +106,16 @@ export default function LoginView({
         await preRegister(data);
         onLoginSuccess?.({
           is_sign_up: true,
+          token: "",
           user: {
             id: "",
             email: data.email,
+            first_name: "",
+            last_name: "",
+            mobile_phone: "",
             is_verified: false,
             profile_complete: false,
+            account_age: 0,
           },
         });
       } else {
@@ -174,8 +131,17 @@ export default function LoginView({
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google/login";
+  const handleGoogleSuccess = async (credential: string) => {
+    setApiError(null);
+    try {
+      const response = await oauthGoogle(credential);
+      onLoginSuccess?.({
+        ...response,
+        is_sign_up: response.is_sign_up ?? false,
+      });
+    } catch {
+      // Errors are caught and handled by hook error state
+    }
   };
 
   return (
@@ -433,9 +399,8 @@ export default function LoginView({
 
         {/* Google OAuth Button */}
         <GoogleOAuthButton
-          onClick={handleGoogleLogin}
-          isLoading={isPending}
-          text={t("auth.buttons.googleOAuth")}
+          onSuccess={handleGoogleSuccess}
+          isLoading={isOAuthing}
         />
       </div>
     </main>

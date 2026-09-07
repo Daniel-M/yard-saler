@@ -1,12 +1,23 @@
 import { useAuth } from "@context/AuthContext";
 import type { LoggedUserDTO } from "@type/auth.types";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
 import LoginView from "../views/LoginView";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { setToken, setUser } = useAuth();
+  const { token, setToken, user, setUser } = useAuth();
+
+  useEffect(() => {
+    if (token) {
+      if (user && !user.profile_complete) {
+        navigate("/user/register", { replace: true });
+      } else {
+        navigate("/user/dashboard", { replace: true });
+      }
+    }
+  }, [token, user, navigate]);
 
   const handleLoginSuccess = (data: {
     user: LoggedUserDTO;

@@ -1,12 +1,16 @@
-import { useAuth } from "@context/AuthContext";
-import { useDrawer } from "@context/DrawerContext";
 import { LanguageToggle } from "@components/LanguageToggle";
 import { ThemeToggle } from "@components/ThemeToggle";
-import { Home, LogOut, Search, Settings, Tag, X } from "lucide-react";
+import { Banner } from "@components/common/Banner";
+import { useAuth } from "@context/AuthContext";
+import { useDrawer } from "@context/DrawerContext";
+import { Home, LogOut, MessageSquare, Search, Settings, Tag, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
+import { useVerificationGuard } from "@hooks/useVerificationGuard";
+import { useNotifications } from "@hooks/useNotifications";
+import { useUnreadCount } from "@hooks/useMessaging";
 import { Header } from "./Header";
 import { UnverifiedBanner } from "./UnverifiedBanner";
 
@@ -25,19 +29,46 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
   Home,
   Tag,
   Search,
+  MessageSquare,
 };
 
 export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
+  const { checking } = useVerificationGuard({ allowedStatus: "verified" });
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { user } = useAuth();
+  const { user, setToken, setUser } = useAuth();
 
-  const { isDrawerOpen, openDrawer, closeDrawer } = useDrawer();
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      setToken(null);
+      setUser(null);
+      navigate("/auth/login", { replace: true });
+    }
+  };
+
+  const { isDrawerOpen, closeDrawer, toggleDrawer } = useDrawer();
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { notifications } = useNotifications();
+  const { count: unreadMessageCount } = useUnreadCount();
+  const prevNotificationsRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    if (prevNotificationsRef.current.length > 0) {
+      const newUnreads = notifications.filter(
+        (n) => !n.is_read && !prevNotificationsRef.current.some((prev) => prev.id === n.id)
+      );
+      if (newUnreads.length > 0) {
+        setToastMessage(`${newUnreads[0].title}: ${newUnreads[0].content}`);
+      }
+    }
+    prevNotificationsRef.current = notifications;
+  }, [notifications]);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const settingsTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileSettingsTriggerRef = useRef<HTMLButtonElement>(null);
@@ -59,16 +90,6 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
-
-  // Dismiss toast after 3 seconds
-  useEffect(() => {
-    if (toastMessage) {
-      const timer = setTimeout(() => {
-        setToastMessage(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toastMessage]);
 
   // Trap focus and handle escape key inside mobile drawer
   useEffect(() => {
@@ -123,19 +144,25 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
     {
       id: "home",
       labelKey: "dashboard.nav.home",
-      path: "/dashboard",
+      path: "/user/dashboard",
       icon: "Home",
     },
     {
       id: "listings",
       labelKey: "dashboard.nav.myListings",
-      path: "/dashboard/my-listings",
+      path: "/user/my-listings",
       icon: "Tag",
+    },
+    {
+      id: "messages",
+      labelKey: "dashboard.nav.messages",
+      path: "/messages",
+      icon: "MessageSquare",
     },
     {
       id: "explore",
       labelKey: "dashboard.nav.explore",
-      path: "/dashboard/explore",
+      path: "/user/explore",
       icon: "Search",
     },
   ];
@@ -183,16 +210,26 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
     return () => window.removeEventListener("keydown", handleModalKeyDown);
   }, [isSettingsModalOpen]);
 
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center" data-testid="loading-skeleton">
+        <div className="h-6 w-6 border-2 border-slate-700 border-t-slate-200 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--canvas)] text-[var(--content-primary)] flex flex-col font-sans">
-      {/* State-driven local toast banner */}
+      {/* State-driven local toast banner using Banner component */}
       {toastMessage && (
-        <div
-          role="alert"
-          className="fixed bottom-4 right-4 z-50 bg-cyan-950 border border-cyan-800 text-cyan-200 px-4 py-3 rounded-lg shadow-lg flex items-center transition-all duration-300"
-        >
-          {toastMessage}
-        </div>
+        <Banner
+          message={toastMessage}
+          variant="info"
+          isFloating={true}
+          onClose={() => setToastMessage(null)}
+          autoDismiss={true}
+          dismissDuration={5000}
+        />
       )}
 
       <div className="flex flex-1 relative overflow-hidden">
@@ -241,12 +278,17 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
                   <span className="lg:pl-8 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300 whitespace-nowrap">
                     {t(item.labelKey)}
                   </span>
+                  {item.id === "messages" && unreadMessageCount > 0 && (
+                    <span className="bg-rose-500 text-white rounded-full text-[10px] font-bold h-5 min-w-[20px] px-1.5 flex items-center justify-center ml-auto shrink-0 lg:absolute lg:right-3 lg:top-2.5 lg:group-hover:static lg:group-hover:ml-auto lg:group-focus-within:static lg:group-focus-within:ml-auto">
+                      {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="p-4 lg:p-2 border-t border-[var(--border-subtle)] space-y-3 relative">
+          <div className="p-2 sm:p-4 lg:p-2 border-t border-[var(--border-subtle)] relative">
             <button
               ref={settingsTriggerRef}
               onClick={handleSettingsClick}
@@ -260,17 +302,21 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
               </span>
             </button>
 
-            <div className="flex items-center gap-2 px-1 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300">
-              <LanguageToggle />
-              <ThemeToggle />
+            <div className="relative flex items-center justify-start gap-2 my-4">
+              <div className="flex items-center justify-center shrink-0">
+                <ThemeToggle />
+              </div>
+              <div className="flex items-center justify-center shrink-0 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300 whitespace-nowrap">
+                <LanguageToggle />
+              </div>
             </div>
 
-            <div className="relative flex items-center justify-between h-12 px-2 rounded-lg bg-[var(--surface-elevated)]/50 lg:bg-transparent lg:group-hover:bg-[var(--surface-elevated)]/50 lg:group-focus-within:bg-[var(--surface-elevated)]/50 transition-colors duration-300">
+            <div className="relative flex items-center justify-between h-12 rounded-lg bg-[var(--surface-elevated)]/50 lg:bg-transparent lg:group-hover:bg-[var(--surface-elevated)]/50 lg:group-focus-within:bg-[var(--surface-elevated)]/50 transition-colors duration-300">
               <button
                 onClick={handleProfileClick}
                 className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded text-left w-full h-full relative"
               >
-                <div className="flex items-center justify-center w-8 h-8 shrink-0 lg:absolute lg:left-2">
+                <div className="flex items-center justify-center w-8 h-8 shrink-0 lg:absolute lg:left-2 lg:top-1/2 lg:-translate-y-1/2">
                   {user?.avatarUrl ? (
                     <img
                       src={user?.avatarUrl}
@@ -283,20 +329,20 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
                     </div>
                   )}
                 </div>
-                <div className="pl-10 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300 overflow-hidden whitespace-nowrap">
+                <div className="pl-12 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300 overflow-hidden whitespace-nowrap">
                   <p className="text-sm font-medium text-[var(--content-secondary)] truncate max-w-[110px]">
                     {user?.displayName}
                   </p>
-                  <p className="text-xs text-[var(--content-primary)]0 truncate max-w-[110px]">
+                  <p className="text-xs text-[var(--content-primary)] truncate max-w-[110px]">
                     {user?.email}
                   </p>
                 </div>
               </button>
 
               <button
-                onClick={onLogout}
+                onClick={handleLogout}
                 aria-label={t("dashboard.nav.logout")}
-                className="text-[var(--content-secondary)] hover:text-red-400 p-1.5 rounded-lg hover:bg-[var(--surface-elevated)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 lg:absolute lg:right-2 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300"
+                className="text-[var(--content-secondary)] hover:text-red-400 p-1.5 rounded-lg hover:bg-[var(--surface-elevated)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2 lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto lg:group-focus-within:opacity-100 lg:group-focus-within:pointer-events-auto transition-opacity duration-300"
               >
                 <LogOut className="h-5 w-5" />
               </button>
@@ -320,7 +366,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
           role="dialog"
           aria-modal="true"
           aria-label={t("dashboard.drawer.ariaLabel")}
-          className={`fixed inset-y-0 left-0 z-50 w-72 bg-[var(--surface)] border-r border-[var(--border-subtle)] flex flex-col lg:hidden transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          className={`fixed inset-y-0 left-0 z-50 w-[85vw] max-w-sm bg-[var(--surface)] border-r border-[var(--border-subtle)] flex flex-col lg:hidden transform transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isDrawerOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           style={{
@@ -328,7 +374,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
             paddingBottom: "env(safe-area-inset-bottom, 0px)",
           }}
         >
-          <div className="h-16 flex items-center justify-between px-6 border-b border-[var(--border-subtle)]">
+          <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--border-subtle)]">
             <span className="font-bold text-lg text-cyan-400 tracking-wider">
               WHALE SHARK
             </span>
@@ -341,7 +387,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
             </button>
           </div>
 
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-3 py-4 space-y-1">
             {navItems.map((item) => {
               const IconComp = ICON_MAP[item.icon] || Home;
               const isActive = location.pathname === item.path;
@@ -350,20 +396,27 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
                   key={item.id}
                   to={item.path}
                   onClick={closeDrawer}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
                     isActive
                       ? "bg-[var(--surface-elevated)] text-cyan-400 font-medium"
                       : "text-[var(--content-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--content-secondary)]"
                   }`}
                 >
-                  <IconComp className="h-5 w-5" />
-                  {t(item.labelKey)}
+                  <div className="flex items-center gap-3">
+                    <IconComp className="h-5 w-5" />
+                    {t(item.labelKey)}
+                  </div>
+                  {item.id === "messages" && unreadMessageCount > 0 && (
+                    <span className="bg-rose-500 text-white rounded-full text-[10px] font-bold h-5 min-w-[20px] px-1.5 flex items-center justify-center shrink-0">
+                      {unreadMessageCount > 9 ? "9+" : unreadMessageCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="p-4 border-t border-[var(--border-subtle)] space-y-3">
+          <div className="p-3 border-t border-[var(--border-subtle)] space-y-2">
             <button
               ref={mobileSettingsTriggerRef}
               onClick={() => {
@@ -376,18 +429,18 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
               {t("dashboard.nav.settings")}
             </button>
 
-            <div className="flex items-center gap-2 px-3">
-              <LanguageToggle />
+            <div className="flex items-center gap-2 px-2">
               <ThemeToggle />
+              <LanguageToggle />
             </div>
 
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--surface-elevated)]/50">
+            <div className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-[var(--surface-elevated)]/50">
               <button
                 onClick={() => {
                   closeDrawer();
                   handleProfileClick();
                 }}
-                className="flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded text-left"
+                className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded text-left"
               >
                 {user?.avatarUrl ? (
                   <img
@@ -404,7 +457,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
                   <p className="text-sm font-medium text-[var(--content-secondary)] truncate max-w-[120px]">
                     {user?.displayName}
                   </p>
-                  <p className="text-xs text-[var(--content-primary)]0 truncate max-w-[120px]">
+                  <p className="text-xs text-[var(--content-primary)] truncate max-w-[120px]">
                     {user?.email}
                   </p>
                 </div>
@@ -413,7 +466,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
               <button
                 onClick={() => {
                   closeDrawer();
-                  onLogout();
+                  handleLogout();
                 }}
                 aria-label={t("dashboard.nav.logout")}
                 className="text-[var(--content-secondary)] hover:text-red-400 p-1.5 rounded-lg hover:bg-[var(--surface-elevated)] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
@@ -434,19 +487,21 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
             isOnline={isOnline}
             onLogout={onLogout}
             showHamburger={true}
-            onHamburgerClick={openDrawer}
+            onHamburgerClick={toggleDrawer}
             hideNavLinks={true}
             hideThemeLanguageToggles={true}
+            onNotificationClick={() => navigate("/messages")}
           />
 
-          {/* Sticky Offline Banner */}
+          {/* Sticky Offline Banner replaced with warning variant of Banner */}
           {!isOnline && (
-            <div
-              role="status"
-              className="bg-amber-950 border-b border-amber-800 text-amber-200 px-4 py-2 text-center text-sm font-medium sticky top-0 z-30 flex items-center justify-center gap-2"
-            >
-              <span>{t("dashboard.offlineBanner")}</span>
-            </div>
+            <Banner
+              message={t("dashboard.offlineBanner")}
+              variant="warning"
+              isFloating={false}
+              autoDismiss={false}
+              className="sticky top-0 z-30 rounded-none border-x-0 border-t-0"
+            />
           )}
 
           {/* Main workspace */}
@@ -493,7 +548,7 @@ export const DrawerLayout: React.FC<DrawerLayoutProps> = ({ onLogout }) => {
                 onClick={() => setIsSettingsModalOpen(false)}
                 className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white text-sm font-semibold rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
               >
-                Close
+                {t("common.buttons.close")}
               </button>
             </div>
           </div>

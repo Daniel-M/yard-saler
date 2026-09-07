@@ -104,4 +104,16 @@ export class UserApiClient {
       signal,
     });
   }
+
+  async oauthGoogle(
+    credential: string,
+    signal?: AbortSignal,
+  ): Promise<UserLoginResponseDTO> {
+    return this._apiClient<UserLoginResponseDTO>("/user/auth/oauth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+      baseUrl: this._baseUrl,
+      signal,
+    });
+  }
 }

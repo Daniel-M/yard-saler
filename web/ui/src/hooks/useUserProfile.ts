@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '../../../context/AuthContext';
-import type { UserProfile } from '@type/auth.types';
-import { UserApiClient } from '../api/auth.api';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "@context/AuthContext";
+import type { UserProfile } from "@type/auth.types";
+import { UserApiClient } from "@features/auth/api/auth.api";
 
 export const useUserProfile = () => {
   const { setUser, user } = useAuth();
@@ -42,7 +42,7 @@ export const useUserProfile = () => {
       }
       return null;
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') {
+      if (err instanceof Error && err.name === "AbortError") {
         return null;
       }
       const errorObj = err instanceof Error ? err : new Error(String(err));

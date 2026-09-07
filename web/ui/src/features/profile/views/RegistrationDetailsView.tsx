@@ -18,7 +18,7 @@ export function RegistrationDetailsView({
   const navigate = useNavigate();
   const location = useLocation();
   const { mutate: editDetailsMutate } = useEditDetails();
-  const { user, setUser } = useAuth();
+  const { token, user, setUser } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [locationVal, setLocationVal] = useState("");
@@ -33,22 +33,11 @@ export function RegistrationDetailsView({
   const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("paseto_token") ||
-      localStorage.getItem("token") ||
-      "";
     if (!token) {
       navigate("/login", { replace: true });
       return;
     }
-
-    if (location.pathname === "/register-details") {
-      const status = localStorage.getItem("user_status");
-      if (status === "VERIFIED_COMPLETE") {
-        navigate("/dashboard", { replace: true });
-      }
-    }
-  }, [navigate, location.pathname]);
+  }, [navigate, token]);
 
   useEffect(() => {
     if (user && !hasInitialized) {
@@ -113,10 +102,9 @@ export function RegistrationDetailsView({
           createdAt: response.created_at,
           updatedAt: response.updated_at,
           verifiedAt: response.verified_at,
+          profile_complete: response.profile_complete,
         });
       }
-
-      localStorage.setItem("user_status", "VERIFIED_COMPLETE");
 
       setIsLoading(false);
       if (onRegistrationComplete) {

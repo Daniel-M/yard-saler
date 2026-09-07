@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import VerifyPage from './VerifyPage';
-import { useVerificationGuard } from '../hooks/useVerificationGuard';
+import { useVerificationGuard } from "@hooks/useVerificationGuard";
 
-vi.mock('../hooks/useVerificationGuard', () => ({
+vi.mock("@hooks/useVerificationGuard", () => ({
   useVerificationGuard: vi.fn(),
 }));
 

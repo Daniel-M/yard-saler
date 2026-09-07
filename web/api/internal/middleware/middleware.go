@@ -43,7 +43,7 @@ func (sw *statusResponseWriter) Write(b []byte) (int, error) {
 	return sw.ResponseWriter.Write(b)
 }
 
-// Logger logs the method, path, and execution duration of incoming HTTP requests using slog.
+// Logger logs the method, path, client IP, Origin, Referer, and execution duration of incoming HTTP requests using slog.
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -54,9 +54,16 @@ func Logger(next http.Handler) http.Handler {
 
 		sw := &statusResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 
+		ip := getClientIP(r)
+		origin := r.Header.Get("Origin")
+		referer := r.Header.Get("Referer")
+
 		slog.DebugContext(ctx, "Request started",
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
+			slog.String("ip", ip),
+			slog.String("origin", origin),
+			slog.String("referer", referer),
 		)
 
 		next.ServeHTTP(sw, r.WithContext(ctx))
@@ -66,10 +73,24 @@ func Logger(next http.Handler) http.Handler {
 		slog.InfoContext(ctx, "Request completed",
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
+			slog.String("ip", ip),
+			slog.String("origin", origin),
+			slog.String("referer", referer),
 			slog.Int("status_code", sw.statusCode),
 			slog.Float64("latency_ms", float64(latency.Nanoseconds())/1e6),
 		)
 	})
+}
+
+func getClientIP(r *http.Request) string {
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		parts := strings.Split(ip, ",")
+		return strings.TrimSpace(parts[0])
+	}
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return ip
+	}
+	return r.RemoteAddr
 }
 
 // Auth verifies the PASETO token in Authorization header.

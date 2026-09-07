@@ -4,6 +4,7 @@ pepper = "whale_shark_secret_pepper_key"
 [auth]
 paseto_key = "whale_shark_symmetric_paseto_secret_key"
 token_ttl = "1h"
+google_client_id = "438239901312-hdfms0q6gij38hs438rqgmh80a6k02o1.apps.googleusercontent.com"
 
 [server]
 port = "8080"
@@ -12,8 +13,7 @@ port = "8080"
 driver = "sqlite3"
 
 [cors]
-allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
+allowed_origins = ["http://localhost:5173", "*"]
 
 [logging]
 level = "debug"
-

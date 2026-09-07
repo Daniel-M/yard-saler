@@ -52,7 +52,6 @@ export const useCodeVerification = ({
         setReceivedToken(receivedToken);
 
         if (receivedToken) {
-          localStorage.setItem("user_status", data.user?.profile_complete ? "VERIFIED_COMPLETE" : "VERIFIED_PENDING_DETAILS");
           localStorage.setItem("token", receivedToken);
           setToken(receivedToken);
           if (data.user) {

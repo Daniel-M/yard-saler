@@ -17,6 +17,19 @@
 
   --color-border-subtle: var(--border-subtle);
   --color-border-interactive: var(--border-interactive);
+
+  --animate-slide-down: slide-down 0.2s ease-out;
+
+  @keyframes slide-down {
+    from {
+      transform: translateY(-1rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 }
 
 :root {

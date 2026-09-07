@@ -17,6 +17,7 @@ import (
 	"github.com/Daniel-M/ys-api/internal/logger"
 	"github.com/Daniel-M/ys-api/internal/messaging"
 	"github.com/Daniel-M/ys-api/internal/middleware"
+	"github.com/Daniel-M/ys-api/internal/notification"
 	"github.com/Daniel-M/ys-api/internal/user"
 	"github.com/Daniel-M/ys-api/internal/wishlist"
 	"github.com/Daniel-M/ys-api/internal/yard_sale"
@@ -66,12 +67,13 @@ func main() {
 
 	// 5. Setup repositories, services, and handlers
 	userRepo := user.NewSqliteUserRepository(db)
-	userService := user.NewUserService(userRepo)
+	googleVerifier := user.NewGoogleTokenVerifier(cfg.Auth.GoogleClientID)
+	userService := user.NewUserService(userRepo, googleVerifier)
 	userHandler := handlers.NewUserHandler(userService, tokenIssuer)
 
 	ysRepo := yard_sale.NewSqliteRepository(db)
 	ysService := yard_sale.NewService(ysRepo)
-	ysHandler := handlers.NewYardSaleHandler(ysService)
+	ysHandler := handlers.NewYardSaleHandler(ysService, tokenIssuer)
 
 	cartRepo := cart.NewSqliteRepository(db)
 	cartService := cart.NewService(cartRepo, ysRepo)
@@ -81,8 +83,12 @@ func main() {
 	wishService := wishlist.NewService(wishRepo, ysRepo)
 	wishHandler := handlers.NewWishlistHandler(wishService)
 
+	notificationRepo := notification.NewSqliteRepository(db)
+	notificationService := notification.NewService(notificationRepo)
+	notificationHandler := handlers.NewNotificationHandler(notificationService)
+
 	msgRepo := messaging.NewSqliteRepository(db)
-	msgService := messaging.NewService(msgRepo, ysRepo)
+	msgService := messaging.NewService(msgRepo, ysRepo, userRepo, notificationRepo)
 	msgHandler := handlers.NewMessagingHandler(msgService)
 
 	uploadHandler := handlers.NewUploadHandler("uploads")
@@ -97,6 +103,7 @@ func main() {
 
 	// New User workflows
 	mux.HandleFunc("POST /user/auth/verify", userHandler.Verify)
+	mux.HandleFunc("POST /user/auth/forgot-password", userHandler.ForgotPassword)
 	mux.HandleFunc("POST /user/auth/password-reset", userHandler.PasswordReset)
 	mux.HandleFunc("POST /user/auth/login", userHandler.Login)
 	mux.HandleFunc("POST /user/auth/oauth/google", userHandler.OAuthGoogle)
@@ -122,6 +129,7 @@ func main() {
 	mux.HandleFunc("GET /api/yard-sales", ysHandler.ListYardSales)
 	mux.HandleFunc("GET /api/yard-sales/{id}", ysHandler.GetYardSale)
 	mux.Handle("POST /api/yard-sales/{id}/products", authMiddleware(http.HandlerFunc(ysHandler.AddProduct)))
+	mux.Handle("PUT /api/yard-sales/{id}/products/{product_id}", authMiddleware(http.HandlerFunc(ysHandler.UpdateProduct)))
 
 	// --- Tracks B & C endpoints with clean /api/ prefix ---
 
@@ -133,7 +141,8 @@ func main() {
 	mux.Handle("GET /api/cart", authMiddleware(http.HandlerFunc(cartHandler.GetCart)))
 	mux.Handle("POST /api/cart", authMiddleware(http.HandlerFunc(cartHandler.AddToCart)))
 	mux.Handle("PATCH /api/cart/items/{id}", authMiddleware(http.HandlerFunc(cartHandler.UpdateCartItem)))
-	mux.Handle("DELETE /api/cart/items/{id}", authMiddleware(http.HandlerFunc(cartHandler.RemoveCartItem)))
+	mux.Handle("GET /api/metrics/projected-earnings", authMiddleware(http.HandlerFunc(ysHandler.GetProjectedEarnings)))
+
 
 	// Wishlist Endpoints
 	mux.Handle("GET /api/wishlist", authMiddleware(http.HandlerFunc(wishHandler.GetWishlist)))
@@ -142,6 +151,16 @@ func main() {
 
 	// Messaging Threads Endpoints
 	mux.Handle("POST /api/messages/threads", authMiddleware(http.HandlerFunc(msgHandler.StartThread)))
+	mux.Handle("GET /api/messages/threads", authMiddleware(http.HandlerFunc(msgHandler.GetConversations)))
+	mux.Handle("GET /api/messages/threads/{thread_id}", authMiddleware(http.HandlerFunc(msgHandler.GetMessageHistory)))
+	mux.Handle("POST /api/messages/threads/{thread_id}/messages", authMiddleware(http.HandlerFunc(msgHandler.SendMessage)))
+	mux.Handle("POST /api/messages/threads/{thread_id}/read", authMiddleware(http.HandlerFunc(msgHandler.MarkThreadRead)))
+	mux.Handle("GET /api/messages/unread", authMiddleware(http.HandlerFunc(msgHandler.GetUnreadCount)))
+
+	// Notifications Endpoints
+	mux.Handle("GET /api/notifications", authMiddleware(http.HandlerFunc(notificationHandler.GetNotifications)))
+	mux.Handle("POST /api/notifications/{id}/read", authMiddleware(http.HandlerFunc(notificationHandler.MarkAsRead)))
+	mux.Handle("POST /api/notifications/read-all", authMiddleware(http.HandlerFunc(notificationHandler.MarkAllAsRead)))
 
 	// Static uploads directory serving
 	fsHandler := http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads")))

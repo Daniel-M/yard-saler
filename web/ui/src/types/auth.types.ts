@@ -35,6 +35,18 @@ export interface LoggedUserDTO {
   is_verified: boolean;
   profile_complete: boolean;
   account_age: number;
+  // UI-friendly optional fields
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  mobilePhone?: string;
+  socials?: string;
+  initials?: string;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  verifiedAt?: string | null;
 }
 
 export interface ForgotPasswordRequestDTO {

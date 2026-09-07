@@ -2,7 +2,7 @@ import { useAuth } from "@context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { RegistrationDetailsView } from "../views/RegistrationDetailsView";
-import { useUserProfile } from "../hooks/useUserProfile";
+import { useUserProfile } from "@hooks/useUserProfile";
 
 export default function RegistrationPage() {
   const { token, user } = useAuth();

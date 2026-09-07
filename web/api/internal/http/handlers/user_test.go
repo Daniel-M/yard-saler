@@ -34,7 +34,7 @@ func setupTestApp(t *testing.T) (*sql.DB, *handlers.UserHandler, auth.AccessToke
 	}
 
 	repo := user.NewSqliteUserRepository(db)
-	svc := user.NewUserService(repo)
+	svc := user.NewUserService(repo, &user.MockTokenVerifier{})
 
 	// Symmetric key must be 32 bytes for PASETO v4
 	tokenIssuer, err := auth.NewAccessTokenIssuer("supersecretkey123456789012345678")

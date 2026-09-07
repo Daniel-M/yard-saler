@@ -25,6 +25,10 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateYardSale(ctx context.Context, userID string, d dto.CreateYardSaleDTO) (*domain.YardSale, error) {
+	eventCode := d.EventCode
+	if eventCode == "" {
+		eventCode = "ev-" + ulid.Make().String()
+	}
 	ys := &domain.YardSale{
 		ID:          ulid.Make().String(),
 		UserID:      userID,
@@ -35,7 +39,7 @@ func (s *Service) CreateYardSale(ctx context.Context, userID string, d dto.Creat
 		EndDate:     d.EndDate,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-		EventCode:   d.EventCode,
+		EventCode:   eventCode,
 	}
 	return s.repo.CreateYardSale(ctx, ys)
 }
@@ -46,10 +50,16 @@ func (s *Service) GetYardSaleDetail(ctx context.Context, id string) (*domain.Yar
 		return nil, nil, err
 	}
 	if ys == nil {
-		return nil, nil, ErrYardSaleNotFound
+		ys, err = s.repo.FindYardSaleByEventCode(ctx, id)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ys == nil {
+			return nil, nil, ErrYardSaleNotFound
+		}
 	}
 
-	prods, err := s.repo.FindProductsByYardSaleID(ctx, id)
+	prods, err := s.repo.FindProductsByYardSaleID(ctx, ys.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -101,7 +111,13 @@ func (s *Service) AddProduct(ctx context.Context, userID string, yardSaleID stri
 		return nil, err
 	}
 	if ys == nil {
-		return nil, ErrYardSaleNotFound
+		ys, err = s.repo.FindYardSaleByEventCode(ctx, yardSaleID)
+		if err != nil {
+			return nil, err
+		}
+		if ys == nil {
+			return nil, ErrYardSaleNotFound
+		}
 	}
 
 	if ys.UserID != userID {
@@ -113,9 +129,14 @@ func (s *Service) AddProduct(ctx context.Context, userID string, yardSaleID stri
 		status = "available"
 	}
 
+	productCode := d.ProductCode
+	if productCode == "" {
+		productCode = "prod-" + ulid.Make().String()
+	}
+
 	prod := &domain.Product{
 		ID:          ulid.Make().String(),
-		YardSaleID:  yardSaleID,
+		YardSaleID:  ys.ID,
 		Name:        d.Name,
 		Description: d.Description,
 		Price:       d.Price,
@@ -124,7 +145,7 @@ func (s *Service) AddProduct(ctx context.Context, userID string, yardSaleID stri
 		Images:      d.Images,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-		ProductCode: d.ProductCode,
+		ProductCode: productCode,
 	}
 
 	if prod.Images == nil {
@@ -132,4 +153,75 @@ func (s *Service) AddProduct(ctx context.Context, userID string, yardSaleID stri
 	}
 
 	return s.repo.CreateProduct(ctx, prod)
+}
+
+func (s *Service) UpdateProduct(ctx context.Context, userID string, yardSaleID string, productID string, d dto.CreateProductDTO) (*domain.Product, error) {
+	ys, err := s.repo.FindYardSaleByID(ctx, yardSaleID)
+	if err != nil {
+		return nil, err
+	}
+	if ys == nil {
+		ys, err = s.repo.FindYardSaleByEventCode(ctx, yardSaleID)
+		if err != nil {
+			return nil, err
+		}
+		if ys == nil {
+			return nil, ErrYardSaleNotFound
+		}
+	}
+
+	if ys.UserID != userID {
+		return nil, ErrForbidden
+	}
+
+	prod, err := s.repo.FindProductByID(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+	if prod == nil {
+		return nil, ErrProductNotFound
+	}
+
+	if prod.YardSaleID != ys.ID {
+		return nil, ErrProductNotFound
+	}
+
+	if err := d.Validate(); err != nil {
+		return nil, err
+	}
+
+	prod.Name = d.Name
+	prod.Description = d.Description
+	prod.Price = d.Price
+	prod.Condition = d.Condition
+	prod.Status = d.Status
+	if d.Images != nil {
+		prod.Images = d.Images
+	}
+	if d.ProductCode != "" {
+		prod.ProductCode = d.ProductCode
+	}
+	prod.UpdatedAt = time.Now()
+
+	err = s.repo.UpdateProduct(ctx, prod)
+	if err != nil {
+		return nil, err
+	}
+
+	return prod, nil
+}
+
+
+// ProjectedEarnings computes the current sold earnings and total projected earnings for a user.
+func (s *Service) ProjectedEarnings(ctx context.Context, userID string) (dto.ProjectedEarningsDTO, error) {
+	currentSold, projectedSold, err := s.repo.GetProjectedEarnings(ctx, userID)
+	if err != nil {
+		return dto.ProjectedEarningsDTO{}, err
+	}
+	return dto.ProjectedEarningsDTO{
+		CurrentSold:       currentSold,
+		ProjectedSold:     projectedSold,
+		ProjectedEarnings: currentSold,
+		Target:            projectedSold,
+	}, nil
 }

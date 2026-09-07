@@ -34,7 +34,7 @@ func TestUserService_PreRegisterAndVerify(t *testing.T) {
 	defer db.Close()
 
 	repo := user.NewSqliteUserRepository(db)
-	svc := user.NewUserService(repo)
+	svc := user.NewUserService(repo, &user.MockTokenVerifier{})
 
 	ctx := context.Background()
 
@@ -105,7 +105,7 @@ func TestUserService_EditUserDetails(t *testing.T) {
 	defer db.Close()
 
 	repo := user.NewSqliteUserRepository(db)
-	svc := user.NewUserService(repo)
+	svc := user.NewUserService(repo, &user.MockTokenVerifier{})
 
 	ctx := context.Background()
 
@@ -150,7 +150,7 @@ func TestUserService_PasswordReset(t *testing.T) {
 	defer db.Close()
 
 	repo := user.NewSqliteUserRepository(db)
-	svc := user.NewUserService(repo)
+	svc := user.NewUserService(repo, &user.MockTokenVerifier{})
 
 	ctx := context.Background()
 
@@ -204,7 +204,7 @@ func TestUserService_OAuthAndCollision(t *testing.T) {
 	defer db.Close()
 
 	repo := user.NewSqliteUserRepository(db)
-	svc := user.NewUserService(repo)
+	svc := user.NewUserService(repo, &user.MockTokenVerifier{})
 
 	ctx := context.Background()
 

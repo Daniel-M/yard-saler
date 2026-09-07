@@ -8,8 +8,25 @@
       "home": "Home",
       "listings": "Listings",
       "about": "About"
+    },
+    "coffee": {
+      "buttonAriaLabel": "Buy me a coffee",
+      "title": "Support the Developer ☕",
+      "qrAlt": "Bre-b QR code for donations",
+      "thankYou": "Thank you for your support! Every coffee helps keep this app running. 🙏",
+      "fundingLabel": "Monthly funding",
+      "funded": "funded"
+    },
+    "contact": {
+      "buttonAriaLabel": "Contact developer",
+      "title": "Contact Developer",
+      "subtitle": "Got feedback or a question? Reach out anytime!",
+      "telegram": "Telegram – @danielmejia55",
+      "whatsapp": "WhatsApp – danielmejia55",
+      "email": "Email – danielmejia55@gmail.com"
     }
   },
+
   "footer": {
     "copyright": "© {{year}} Whale Shark. All rights reserved.",
     "links": {
@@ -19,6 +36,7 @@
     }
   },
   "common": {
+    "loading": "Loading...",
     "theme": {
       "toggleLabel": "Toggle color theme",
       "darkMode": "Dark mode",
@@ -61,7 +79,8 @@
       "invalidEmail": "Please enter a valid email address.",
       "passwordTooShort": "Password must be at least 8 characters long.",
       "emailRequired": "Email is required.",
-      "passwordRequired": "Password is required."
+      "passwordRequired": "Password is required.",
+      "googleBlocked": "Google Sign-In is unavailable. Please check your connection or disable ad-blockers."
     },
     "login": {
       "error": {
@@ -151,9 +170,32 @@
     }
   },
   "dashboard": {
+    "title": "Dashboard",
+    "myYardSales": "My Yard Sales",
+    "myYardSalesSubtitle": "Manage and check your yard sale events and listings",
+    "quickStats": {
+      "activeListings": "Active Listings",
+      "unreadMessages": "Unread Messages",
+      "quickActions": "Quick Actions"
+    },
+    "actions": {
+      "createListing": "Create Yard Sale",
+      "viewMessages": "View Messages",
+      "explore": "Explore Sales"
+    },
+    "tabs": {
+      "current": "Current Events ({{count}})",
+      "past": "Past Events ({{count}})"
+    },
+    "noActiveEvents": "You have no active yard sale events scheduled right now.",
+    "noPastEvents": "You have no past yard sale events on record.",
+    "getStarted": "Get Started",
+    "viewEvent": "View Event",
+    "loadFailedError": "Failed to load your yard sales",
     "nav": {
       "home": "Dashboard",
       "myListings": "My Listings",
+      "messages": "Messages",
       "explore": "Explore",
       "settings": "Settings",
       "logout": "Log Out"
@@ -161,12 +203,17 @@
     "offlineBanner": "You are currently offline. Listing updates may be delayed.",
     "stubs": {
       "settingsComingSoon": "Coming Soon: Settings & Configuration",
-      "profileComingSoon": "Coming Soon: Profile Management"
+      "profileComingSoon": "Coming Soon: Profile Management",
+      "notificationsComingSoon": "Coming Soon: Notifications & Activity Log"
     },
     "drawer": {
       "ariaLabel": "Navigation Menu",
       "closeAriaLabel": "Close navigation menu",
       "openAriaLabel": "Open navigation menu"
+    },
+    "earnings": {
+      "title": "Projected Earnings",
+      "ofTarget": "of {{target}} expected goal"
     }
   },
   "yard_sale": {
@@ -275,5 +322,28 @@
       "listing_product": "Listing Product...",
       "upload_failed": "Upload failed: {{statusText}}"
     }
+  },
+  "messaging": {
+    "title": "Messages",
+    "no_conversations": "No conversations yet.",
+    "select_conversation": "Select a conversation to start chatting",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "back_to_inbox": "Back to Inbox",
+    "product_label": "Product: ",
+    "unread_messages": "Unread messages",
+    "sent": "Sent",
+    "read": "Read"
+  },
+  "explore": {
+    "title": "Explore Local Yard Sales",
+    "subtitle": "Find yard sales and items in your city",
+    "yourCity": "Showing events in {{city}}",
+    "searchPlaceholder": "Search by title, description or address...",
+    "noListings": "No yard sales found in your city: {{city}}.",
+    "noListingsSubtitle": "Try adjusting your search criteria or check back later.",
+    "noProfileLocationTitle": "Location Not Set",
+    "noProfileLocation": "Please set your location in settings to view yard sales near you.",
+    "loadFailed": "Failed to load explore listings"
   }
 }
